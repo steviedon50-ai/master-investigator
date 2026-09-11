@@ -25,10 +25,6 @@ import type {
 export const CASE_000_ID = 'case-000';
 export const AUTHORED_VERSION = 'authored-v1';
 
-/* ---------------------------------------------------------------- */
-/* Case file                                                        */
-/* ---------------------------------------------------------------- */
-
 export const caseFile: CaseFile = {
   id: CASE_000_ID,
   number: 0,
@@ -64,10 +60,6 @@ export const caseFile: CaseFile = {
     connectionBonus: 5,
   },
 };
-
-/* ---------------------------------------------------------------- */
-/* Evidence                                                         */
-/* ---------------------------------------------------------------- */
 
 export const evidence: Evidence[] = [
   {
@@ -142,10 +134,6 @@ export const evidence: Evidence[] = [
     tags: ['date', 'record'],
   },
 ];
-
-/* ---------------------------------------------------------------- */
-/* Documents                                                        */
-/* ---------------------------------------------------------------- */
 
 export const documents: InvestigationDocument[] = [
   {
@@ -223,3 +211,8 @@ export const documents: InvestigationDocument[] = [
     body:
       '13 MAR 1873, 6.00 P.M. — Seal checked. Intact. — W.A.\n' +
       '14 MAR 1873, 6.10 A.M. — Seal broken. Reported. — W.A.',
+    footnote: 'Ledger held at the archive. Entries in one hand.',
+    marks: ['ruled', 'ink'],
+    hiddenClue: null,
+  },
+];
