@@ -1,9 +1,9 @@
 /**
  * Case file.
  *
- * Shown once, before the first stage. The briefing lives here rather than
- * above every puzzle — it is read once and then referred back to, which is
- * how a real case file works.
+ * The same folder from the title screen, now open on the same desk. Continuity
+ * matters more than novelty here — the player should feel they opened the thing
+ * they were just looking at, not that they moved to a different screen.
  */
 
 import type { CaseFile as CaseFileData } from '../engine/types';
@@ -34,43 +34,56 @@ export default function CaseFileView({
   onOpen,
 }: Props) {
   return (
-    <main className="cf">
-      <div className="cf__inner">
-        <p className="cf__number">{textOf(caseFile.strapline)}</p>
-        <h1 className="cf__title">{textOf(caseFile.title)}</h1>
+    <main className="desk desk--open">
+      <article className="folder folder--open">
+        <div className="folder__tab" aria-hidden="true">
+          <span className="folder__tab-text">000</span>
+        </div>
 
-        <dl className="cf__facts">
-          <div>
-            <dt>Difficulty</dt>
-            <dd>{DIFFICULTY_LABEL[caseFile.difficulty] ?? caseFile.difficulty}</dd>
-          </div>
-          <div>
-            <dt>Stages</dt>
-            <dd>{stageCount}</dd>
-          </div>
-          <div>
-            <dt>Evidence</dt>
-            <dd>{evidenceCount} items</dd>
-          </div>
-          <div>
-            <dt>Estimated</dt>
-            <dd>{caseFile.estimatedMinutes} min</dd>
-          </div>
-        </dl>
+        <div className="folder__body">
+          <header className="sheet__head">
+            <p className="sheet__ref">{textOf(caseFile.strapline)}</p>
+            <h1 className="sheet__title">{textOf(caseFile.title)}</h1>
+          </header>
 
-        <p className="cf__briefing">{textOf(caseFile.briefing)}</p>
+          {/* Typed on a form, as a real file jacket would be. */}
+          <dl className="sheet__facts">
+            <div>
+              <dt>Difficulty</dt>
+              <dd>{DIFFICULTY_LABEL[caseFile.difficulty] ?? caseFile.difficulty}</dd>
+            </div>
+            <div>
+              <dt>Stages</dt>
+              <dd>{stageCount}</dd>
+            </div>
+            <div>
+              <dt>Evidence</dt>
+              <dd>{evidenceCount} items</dd>
+            </div>
+            <div>
+              <dt>Estimated</dt>
+              <dd>{caseFile.estimatedMinutes} min</dd>
+            </div>
+          </dl>
 
-        <p className="cf__heading">Objectives</p>
-        <ul className="cf__objectives">
-          {caseFile.objectives.map((objective) => (
-            <li key={objective.id}>{objective.label}</li>
-          ))}
-        </ul>
+          <p className="sheet__briefing">{textOf(caseFile.briefing)}</p>
 
-        <button type="button" className="cf__open" onClick={onOpen}>
-          Open the dossier
-        </button>
-      </div>
+          <p className="sheet__heading">Objectives</p>
+          <ul className="sheet__objectives">
+            {caseFile.objectives.map((objective) => (
+              <li key={objective.id}>{objective.label}</li>
+            ))}
+          </ul>
+
+          <p className="sheet__filed" aria-hidden="true">
+            FILED — NO SENDER RECORDED
+          </p>
+        </div>
+      </article>
+
+      <button type="button" className="desk__begin" onClick={onOpen}>
+        Open the dossier
+      </button>
     </main>
   );
 }
