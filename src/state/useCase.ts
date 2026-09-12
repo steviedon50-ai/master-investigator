@@ -1,22 +1,14 @@
 /**
- * React binding for a single investigation.
- *
- * Autosaves on every change. The blueprint asks for notes that save
- * automatically; doing it at this level means every part of the case does,
- * and no screen has to remember to.
+ * React binding for a single investigation. Autosaves on every change.
  */
 
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import type {
-  CaseProgress,
-  HintLevel,
-  Investigation,
-  Note,
-  Puzzle,
-} from '../engine/types';
-import { validate, type SolverContext } from '../engine/puzzles';
+import type { CaseProgress, HintLevel, Investigation, Puzzle } from '../engine/types';
+import { validate } from '../engine/puzzles';
 import { completionPercent, scoreCase } from '../engine/scoring';
-import { localAdapter, type StorageAdapter } from './storage';
+import { localAdapter } from './storage';
+import type { StorageAdapter } from './storage';
+import type { Action } from './progress';
 import {
   createProgress,
   currentPuzzle,
@@ -24,7 +16,6 @@ import {
   isUnlocked,
   reduce,
   visibleEvidence,
-  type Action,
 } from './progress';
 
 export interface AnswerOutcome {
@@ -33,18 +24,19 @@ export interface AnswerOutcome {
   feedback?: string;
 }
 
+function init(investigation: Investigation, adapter: StorageAdapter): CaseProgress {
+  return adapter.loadProgress(investigation.caseFile.id) ?? createProgress(investigation);
+}
+
 export function useCase(
   investigation: Investigation,
   adapter: StorageAdapter = localAdapter,
 ) {
-  const [progress, dispatch] = useReducer(
-    (state: CaseProgress, action: Action) => reduce(state, action),
-    investigation,
-    (inv) => adapter.loadProgress(inv.caseFile.id) ?? createProgress(inv),
-  );
+  const reducer = (state: CaseProgress, action: Action): CaseProgress =>
+    reduce(state, action);
 
-  // Transient UI state — deliberately not persisted. A feedback message from
-  // a wrong answer should not survive a reload.
+  const [progress, dispatch] = useReducer(reducer, init(investigation, adapter));
+
   const [lastOutcome, setLastOutcome] = useState<AnswerOutcome | null>(null);
 
   useEffect(() => {
@@ -71,15 +63,16 @@ export function useCase(
     [progress, investigation],
   );
 
-  /** Live score while playing; final score once the case is submitted. */
   const score = useMemo(
     () => scoreCase(progress, investigation),
     [progress, investigation],
   );
 
   const documentFor = useCallback(
-    (documentId: string | undefined) =>
-      investigation.documents.find((d) => d.id === documentId) ?? null,
+    (documentId: string | undefined) => {
+      if (!documentId) return null;
+      return investigation.documents.find((d) => d.id === documentId) ?? null;
+    },
     [investigation],
   );
 
@@ -89,10 +82,7 @@ export function useCase(
       if (!item) return;
       dispatch({ type: 'inspect-evidence', evidenceId, name: item.name });
       if (item.documentId) {
-        const doc = investigation.documents.find((d) => d.id === item.documentId);
-        if (doc) {
-          dispatch({ type: 'view-document', documentId: doc.id, name: item.name });
-        }
+        dispatch({ type: 'view-document', documentId: item.documentId, name: item.name });
       }
     },
     [investigation],
@@ -104,12 +94,10 @@ export function useCase(
 
   const submitAnswer = useCallback(
     (puzzle: Puzzle, answer: string): AnswerOutcome => {
-      const context: SolverContext = {
+      const result = validate(puzzle, answer, {
         inspectedEvidence: progress.inspectedEvidence,
         stepAnswers: progress.puzzles[puzzle.id]?.stepAnswers ?? {},
-      };
-
-      const result = validate(puzzle, answer, context);
+      });
 
       if (result.correct) {
         dispatch({ type: 'solve-puzzle', puzzle });
@@ -134,45 +122,36 @@ export function useCase(
   const useHint = useCallback((puzzle: Puzzle, level: HintLevel) => {
     const hint = puzzle.hints.find((h) => h.level === level);
     if (!hint) return null;
-    dispatch({
-      type: 'use-hint',
-      puzzleId: puzzle.id,
-      level: hint.level,
-      title: puzzle.title,
-    });
+    dispatch({ type: 'use-hint', puzzleId: puzzle.id, level, title: puzzle.title });
     return hint;
   }, []);
 
   const hintsUsedFor = useCallback(
-    (puzzleId: string) => progress.puzzles[puzzleId]?.hintsUsed ?? [],
+    (puzzleId: string): HintLevel[] => progress.puzzles[puzzleId]?.hintsUsed ?? [],
     [progress],
   );
 
-  const addNote = useCallback((body: string, attachedTo?: Note['attachedTo']) => {
-    dispatch({ type: 'add-note', body, attachedTo });
-  }, []);
-
-  const editNote = useCallback((noteId: string, body: string) => {
-    dispatch({ type: 'edit-note', noteId, body });
+  const addNote = useCallback((body: string) => {
+    dispatch({ type: 'add-note', body });
   }, []);
 
   const deleteNote = useCallback((noteId: string) => {
     dispatch({ type: 'delete-note', noteId });
   }, []);
 
-  const linkEvidence = useCallback(
-    (from: string, to: string, kind: string, note?: string) => {
-      dispatch({ type: 'link-evidence', from, to, kind, note });
-    },
-    [],
-  );
-
-  const clearOutcome = useCallback(() => setLastOutcome(null), []);
+  const clearOutcome = useCallback(() => {
+    setLastOutcome(null);
+  }, []);
 
   const restart = useCallback(() => {
     adapter.clearProgress(investigation.caseFile.id);
     window.location.reload();
   }, [adapter, investigation]);
+
+  const unlocked = useCallback(
+    (puzzle: Puzzle) => isUnlocked(puzzle, progress),
+    [progress],
+  );
 
   return {
     progress,
@@ -189,11 +168,9 @@ export function useCase(
     useHint,
     hintsUsedFor,
     addNote,
-    editNote,
     deleteNote,
-    linkEvidence,
     clearOutcome,
     restart,
-    isUnlocked: (puzzle: Puzzle) => isUnlocked(puzzle, progress),
+    unlocked,
   };
 }
