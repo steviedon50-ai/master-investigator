@@ -8,6 +8,7 @@ import './styles/puzzle.css';
 import './styles/case.css';
 import './styles/reveal.css';
 import './styles/detail.css';
+import './styles/solved.css';
 const rootEl = document.getElementById('root');
 
 if (!rootEl) {
