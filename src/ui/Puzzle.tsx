@@ -1,9 +1,9 @@
 /**
  * Puzzle screen.
  *
- * One puzzle fills the screen. The document it depends on sits directly above
- * the input, so nobody has to hold a Morse group in their head while they
- * navigate somewhere else to type it.
+ * One puzzle fills the screen. Whatever the puzzle depends on — a document,
+ * or a bare piece of ciphertext — is shown directly above the input, so nobody
+ * has to hold it in their head while navigating elsewhere to type.
  */
 
 import { useEffect, useState } from 'react';
@@ -55,7 +55,6 @@ export default function PuzzleView({
   const [hintsOpen, setHintsOpen] = useState(false);
   const [error, setError] = useState('');
 
-  // A new puzzle means a clean slate, otherwise the previous answer lingers.
   useEffect(() => {
     setAnswer('');
     setError('');
@@ -65,6 +64,10 @@ export default function PuzzleView({
   const steps = (puzzle.data.steps as ResearchStep[] | undefined) ?? [];
   const isResearch = puzzle.type === 'research.chain';
   const isInspection = puzzle.type === 'inspection';
+
+  const ciphertext =
+    typeof puzzle.data.ciphertext === 'string' ? puzzle.data.ciphertext : null;
+  const source = typeof puzzle.data.source === 'string' ? puzzle.data.source : null;
 
   const handleSubmit = (): void => {
     if (!isInspection && answer.trim().length === 0) {
@@ -87,6 +90,12 @@ export default function PuzzleView({
       <p className="pz__description">{puzzle.description}</p>
 
       {document && <DocumentView document={document} inline />}
+
+      {!document && ciphertext && <p className="pz__cipher">{ciphertext}</p>}
+
+      {!document && !ciphertext && source && (
+        <p className="pz__cipher pz__cipher--letters">{source}</p>
+      )}
 
       {isResearch && (
         <div className="pz__steps">
@@ -166,7 +175,9 @@ export default function PuzzleView({
         >
           Hints
           <span className="pz__hints-count">
-            {hintsUsed.length > 0 ? `${hintsUsed.length} used` : `${puzzle.hints.length} available`}
+            {hintsUsed.length > 0
+              ? `${hintsUsed.length} used`
+              : `${puzzle.hints.length} available`}
           </span>
         </button>
 
