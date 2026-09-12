@@ -7,7 +7,7 @@ import './styles/document.css';
 import './styles/puzzle.css';
 import './styles/case.css';
 import './styles/reveal.css';
-
+import './styles/detail.css';
 const rootEl = document.getElementById('root');
 
 if (!rootEl) {
