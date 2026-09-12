@@ -1,0 +1,80 @@
+/* Contradiction puzzle. Two sets of choices, generous touch targets. */
+
+.contra {
+  margin: 0 0 1rem;
+}
+
+.contra__label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin: 1.5rem 0 0.65rem;
+}
+
+.contra__label:first-child {
+  margin-top: 0;
+}
+
+.contra__options {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.contra__option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--charcoal-raised);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.8rem 0.85rem;
+  margin-bottom: 0.5rem;
+  min-height: 56px;
+}
+
+/* Selection is shown by border and a brass edge, not by colour alone —
+   the label text also changes weight so it reads without colour. */
+.contra__option--on {
+  border-color: var(--brass);
+  box-shadow: inset 3px 0 0 var(--brass);
+}
+
+.contra__option-name {
+  display: block;
+  color: var(--text);
+  font-size: 0.92rem;
+  margin-bottom: 0.15rem;
+}
+
+.contra__option--on .contra__option-name {
+  color: var(--paper);
+}
+
+.contra__option-summary {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.contra__reason {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  min-height: 48px;
+}
+
+.contra__reason--on {
+  border-color: var(--brass);
+  box-shadow: inset 3px 0 0 var(--brass);
+  color: var(--paper);
+}
