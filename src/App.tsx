@@ -1,5 +1,8 @@
 /**
- * Step 5: the puzzle screen goes back in. Case 000 becomes playable.
+ * The game.
+ *
+ * A correct answer holds on a confirmation screen before moving on, so the
+ * player gets the moment and the explanation rather than a jump cut.
  */
 
 import { useState } from 'react';
@@ -8,10 +11,13 @@ import { useCase } from './state/useCase';
 import CaseView from './ui/Case';
 import PuzzleView from './ui/Puzzle';
 import RevealView from './ui/Reveal';
+import Solved from './ui/Solved';
+import type { Puzzle } from './engine/types';
 
 export default function App() {
   const game = useCase(case000);
   const [showReveal, setShowReveal] = useState(false);
+  const [justSolved, setJustSolved] = useState<Puzzle | null>(null);
 
   if (showReveal && case000.reveal) {
     return (
@@ -32,7 +38,14 @@ export default function App() {
       onAddNote={game.addNote}
       onDeleteNote={game.deleteNote}
     >
-      {puzzle ? (
+      {justSolved ? (
+        <Solved
+          puzzle={justSolved}
+          fragment={justSolved.rewards.fragment}
+          hintsUsed={game.hintsUsedFor(justSolved.id).length}
+          onContinue={() => setJustSolved(null)}
+        />
+      ) : puzzle ? (
         <PuzzleView
           puzzle={puzzle}
           stageCount={case000.puzzles.length}
@@ -42,8 +55,12 @@ export default function App() {
           outcome={game.lastOutcome}
           onSubmit={(answer) => {
             const result = game.submitAnswer(puzzle, answer);
-            if (result.correct && puzzle.type === 'meta.assembly') {
+            if (!result.correct) return;
+
+            if (puzzle.type === 'meta.assembly') {
               setShowReveal(true);
+            } else {
+              setJustSolved(puzzle);
             }
           }}
           onAnswerStep={(stepId, answer) => game.answerStep(puzzle.id, stepId, answer)}
