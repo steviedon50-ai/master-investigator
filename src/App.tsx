@@ -1,134 +1,88 @@
 /**
- * The game.
- *
- * Title, case file, play, reveal, results. A returning player skips straight
- * back to where they were; a finished player lands on their score.
+ * Temporary harness: does the generator actually produce valid cases?
+ * Generates a spread of cases for one investigator and reports the results.
  */
 
-import { useState } from 'react';
-import case000 from './data/case000';
-import { useCase } from './state/useCase';
-import CaseView from './ui/Case';
-import CaseFileView from './ui/CaseFile';
-import PuzzleView from './ui/Puzzle';
-import Results from './ui/Results';
-import RevealView from './ui/Reveal';
-import Solved from './ui/Solved';
-import Title from './ui/Title';
-import type { Puzzle } from './engine/types';
+import { generateCase, GENERATOR_VERSION } from './engine/generator';
+import { validateCase } from './engine/validator';
+import { difficultyFor } from './engine/cases';
 
-type Screen = 'title' | 'casefile' | 'playing' | 'reveal' | 'results';
-
-function textOf(value: { fallback: string } | string): string {
-  return typeof value === 'string' ? value : value.fallback;
+interface Row {
+  caseNumber: number;
+  ok: boolean;
+  title: string;
+  errors: string[];
 }
 
 export default function App() {
-  const game = useCase(case000);
+  const investigatorId = 'MI-TEST-01';
+  const rows: Row[] = [];
 
-  const returning =
-    game.progress.inspectedEvidence.length > 0 ||
-    Object.keys(game.progress.puzzles).length > 0;
+  for (let caseNumber = 1; caseNumber <= 12; caseNumber += 1) {
+    const candidate = generateCase({
+      investigatorId,
+      caseNumber,
+      difficulty: difficultyFor(caseNumber),
+      generatorVersion: GENERATOR_VERSION,
+    });
 
-  const [screen, setScreen] = useState<Screen>(
-    game.complete ? 'results' : returning ? 'playing' : 'title',
-  );
-  const [justSolved, setJustSolved] = useState<Puzzle | null>(null);
+    if (!candidate) {
+      rows.push({
+        caseNumber,
+        ok: false,
+        title: '—',
+        errors: ['generator returned null'],
+      });
+      continue;
+    }
 
-  if (screen === 'title') {
-    return (
-      <Title
-        onBegin={() => setScreen('casefile')}
-        estimatedMinutes={case000.caseFile.estimatedMinutes}
-        stageCount={case000.puzzles.length}
-      />
-    );
+    const report = validateCase(candidate);
+    const title =
+      typeof candidate.caseFile.title === 'string'
+        ? candidate.caseFile.title
+        : candidate.caseFile.title.fallback;
+
+    rows.push({
+      caseNumber,
+      ok: report.valid,
+      title,
+      errors: report.issues
+        .filter((i) => i.severity === 'error')
+        .map((i) => `${i.code}: ${i.message}`),
+    });
   }
 
-  if (screen === 'casefile') {
-    return (
-      <CaseFileView
-        caseFile={case000.caseFile}
-        stageCount={case000.puzzles.length}
-        evidenceCount={case000.evidence.length}
-        onOpen={() => setScreen('playing')}
-      />
-    );
-  }
-
-  if (screen === 'reveal' && case000.reveal) {
-    return (
-      <RevealView reveal={case000.reveal} onContinue={() => setScreen('results')} />
-    );
-  }
-
-  if (screen === 'results') {
-    return (
-      <Results
-        score={game.score}
-        caseTitle={textOf(case000.caseFile.title)}
-        onRestart={game.restart}
-      />
-    );
-  }
-
-  const puzzle = game.active;
+  const passed = rows.filter((r) => r.ok).length;
 
   return (
-    <CaseView
-      investigation={case000}
-      progress={game.progress}
-      evidence={game.evidence}
-      percent={game.percent}
-      score={game.score.total}
-      onInspect={game.inspect}
-      onAddNote={game.addNote}
-      onDeleteNote={game.deleteNote}
-      onRestart={game.restart}
-    >
-      {justSolved ? (
-        <Solved
-          puzzle={justSolved}
-          fragment={justSolved.rewards.fragment}
-          hintsUsed={game.hintsUsedFor(justSolved.id).length}
-          onContinue={() => setJustSolved(null)}
-        />
-      ) : puzzle ? (
-        <PuzzleView
-          puzzle={puzzle}
-          stageCount={case000.puzzles.length}
-          document={game.documentFor(puzzle.data.documentId as string | undefined)}
-          evidence={game.evidence}
-          fragments={game.progress.fragments}
-          hintsUsed={game.hintsUsedFor(puzzle.id)}
-          stepAnswers={game.progress.puzzles[puzzle.id]?.stepAnswers ?? {}}
-          outcome={game.lastOutcome}
-          onSubmit={(answer) => {
-            const result = game.submitAnswer(puzzle, answer);
-            if (!result.correct) return;
+    <main className="boot">
+      <p className="boot__number">Generator test</p>
+      <h1 className="boot__title">
+        {passed} of {rows.length} valid
+      </h1>
 
-            if (puzzle.type === 'meta.assembly') {
-              setScreen('reveal');
-            } else {
-              setJustSolved(puzzle);
-            }
-          }}
-          onAnswerStep={(stepId, answer) => game.answerStep(puzzle.id, stepId, answer)}
-          onUseHint={(level) => game.useHint(puzzle, level)}
-          onClearOutcome={game.clearOutcome}
-        />
-      ) : (
-        <section className="pz">
-          <h2 className="pz__title">Case closed</h2>
-          <button
-            type="button"
-            className="pz__submit"
-            onClick={() => setScreen('results')}
-          >
-            See your results
-          </button>
-        </section>
-      )}
-    </CaseView>
+      <ul style={{ listStyle: 'none', padding: 0, margin: '2rem 0 0' }}>
+        {rows.map((row) => (
+          <li key={row.caseNumber} style={{ marginBottom: '1.25rem' }}>
+            <p style={{ margin: 0, color: row.ok ? '#5dcaa5' : '#e2726a' }}>
+              Case {String(row.caseNumber).padStart(3, '0')} — {row.ok ? 'valid' : 'failed'} —{' '}
+              {row.title}
+            </p>
+            {row.errors.map((error, i) => (
+              <p
+                key={i}
+                style={{
+                  margin: '0.25rem 0 0 1rem',
+                  fontSize: '0.8rem',
+                  color: '#8e948f',
+                }}
+              >
+                {error}
+              </p>
+            ))}
+          </li>
+        ))}
+      </ul>
+    </main>
   );
 }
