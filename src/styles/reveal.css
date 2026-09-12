@@ -1,6 +1,7 @@
 /* The reveal. The one moment in the game that is pure theatre. */
 
 .reveal {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -8,7 +9,6 @@
   align-items: center;
   text-align: center;
   padding: var(--gutter);
-  /* Darker than the rest of the game — the lamp has been turned up. */
   background:
     radial-gradient(90% 60% at 50% 40%, rgba(201, 139, 58, 0.12) 0%, rgba(201, 139, 58, 0) 60%),
     var(--ink-black);
@@ -18,47 +18,50 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.5rem;
+}
+
+.reveal__opening {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.24em;
+  color: var(--verdigris);
+  margin: 0 0 2rem;
+  animation: reveal-in 0.8s ease both;
 }
 
 .reveal__word {
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 7vw, 2.4rem);
-  letter-spacing: 0.08em;
+  font-size: clamp(1.4rem, 6.5vw, 2.1rem);
+  letter-spacing: 0.14em;
   color: var(--paper);
   animation: reveal-word 0.7s ease both;
 }
 
+/* The title arrives alone, after the words have cleared. Larger than any
+   of them, and centred on its own. */
 .reveal__title {
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 7.5vw, 2.8rem);
-  line-height: 1.15;
+  font-size: clamp(1.9rem, 8.5vw, 3rem);
+  line-height: 1.1;
   color: var(--paper);
-  margin: 1.5rem 0 0;
-  max-width: 14ch;
-  animation: reveal-title 1.1s ease both;
+  margin: 0;
+  max-width: 12ch;
+  animation: reveal-title 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .reveal__line {
   color: var(--text-dim);
   font-size: 0.95rem;
-  max-width: 28ch;
-  margin: 0.75rem 0 0;
-  animation: reveal-word 0.9s ease both;
-}
-
-/* The first line — IDENTITY VERIFIED — sets the tone. */
-.reveal__stage > .reveal__line:first-child {
-  font-family: var(--font-mono);
-  letter-spacing: 0.22em;
-  font-size: 0.8rem;
-  color: var(--verdigris);
-  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  max-width: 30ch;
+  margin: 1.25rem 0 0;
+  animation: reveal-in 1s ease both;
 }
 
 .reveal__continue {
-  margin-top: 2.5rem;
+  margin-top: 3rem;
   background: none;
   border: 1px solid var(--brass);
   border-radius: 4px;
@@ -66,46 +69,69 @@
   font-family: var(--font-mono);
   font-size: 0.8rem;
   letter-spacing: 0.12em;
-  padding: 0.85rem 2rem;
+  padding: 0.85rem 2.5rem;
   min-height: 52px;
-  animation: reveal-word 0.8s ease both;
+  animation: reveal-in 1.2s ease both;
 }
 
+/* Deliberately quiet and out of the way — skipping should be possible,
+   not suggested. */
 .reveal__skip {
   position: absolute;
   bottom: calc(1.5rem + var(--safe-bottom));
   background: none;
   border: 0;
-  color: #5f6560;
-  font-size: 0.78rem;
-  padding: 0.6rem 1.25rem;
+  color: #4a4f4b;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  padding: 0.6rem 1.5rem;
   min-height: 44px;
 }
 
 .reveal--static .reveal__word,
 .reveal--static .reveal__title,
 .reveal--static .reveal__line,
+.reveal--static .reveal__opening,
 .reveal--static .reveal__continue {
   animation: none;
+}
+
+.reveal--static .reveal__title {
+  margin-bottom: 1rem;
 }
 
 @keyframes reveal-word {
   from {
     opacity: 0;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.5em;
+    filter: blur(4px);
   }
   to {
     opacity: 1;
+    letter-spacing: 0.14em;
+    filter: blur(0);
   }
 }
 
 @keyframes reveal-title {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(1.12);
+    letter-spacing: 0.2em;
   }
   to {
     opacity: 1;
     transform: scale(1);
+    letter-spacing: 0.01em;
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
