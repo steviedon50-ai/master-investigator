@@ -237,3 +237,27 @@
   font-size: 1.6rem;
   letter-spacing: 0.3em;
 }
+
+/* Search link on research steps. Deliberately quiet — looking things up is
+   allowed, but the game should not push you out of itself. */
+
+.pz__search {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  text-decoration: none;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0 0.7rem;
+  min-height: 48px;
+}
+
+.pz__search:active {
+  border-color: var(--brass);
+  color: var(--paper);
+}
