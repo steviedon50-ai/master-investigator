@@ -1,10 +1,8 @@
 /**
  * Results.
  *
- * The four dimensions are the score, so the facts below them are reported as
- * what happened rather than as deductions — hints and wrong answers already
- * cost you inside the dimensions, and showing them twice as minus figures
- * would imply a penalty that is not there.
+ * The four dimensions are the score, so the facts below them report what
+ * happened rather than posing as deductions.
  */
 
 import type { ScoreBreakdown } from '../engine/types';
@@ -13,6 +11,7 @@ interface Props {
   score: ScoreBreakdown;
   caseTitle: string;
   onRestart: () => void;
+  onNext: () => void;
 }
 
 const DIMENSIONS: Array<{
@@ -33,13 +32,7 @@ function duration(seconds: number): string {
   return `${m}m ${String(s).padStart(2, '0')}s`;
 }
 
-function plural(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`;
-}
-
-export default function Results({ score, caseTitle, onRestart }: Props) {
-  const hintCount = score.hintPenalty > 0 ? score.hintPenalty : 0;
-
+export default function Results({ score, caseTitle, onRestart, onNext }: Props) {
   return (
     <main className="res">
       <div className="res__inner">
@@ -77,30 +70,30 @@ export default function Results({ score, caseTitle, onRestart }: Props) {
             <dd>{duration(score.timeSeconds)}</dd>
           </div>
           <div>
-            <dt>Hints used</dt>
-            <dd>{hintCount === 0 ? 'None' : plural(hintCount, 'hint', 'hints')}</dd>
+            <dt>Hints</dt>
+            <dd>{score.hintPenalty === 0 ? 'None used' : 'Used'}</dd>
           </div>
           <div>
             <dt>Wrong answers</dt>
-            <dd>
-              {score.wrongAnswerPenalty === 0
-                ? 'None'
-                : plural(score.wrongAnswerPenalty, 'attempt', 'attempts')}
-            </dd>
+            <dd>{score.wrongAnswerPenalty === 0 ? 'None' : 'Some'}</dd>
           </div>
           <div>
             <dt>Rank ceiling</dt>
-            <dd>Apprentice case</dd>
+            <dd>By difficulty</dd>
           </div>
         </dl>
 
         <p className="res__next">
-          Harder cases carry higher ranks. This was an apprentice investigation —
-          Master and Black cases are where Legendary lives.
+          The next case is generated for you alone. Another investigator opening
+          the same number will find a different investigation.
         </p>
 
+        <button type="button" className="res__continue" onClick={onNext}>
+          Next case
+        </button>
+
         <button type="button" className="res__again" onClick={onRestart}>
-          Investigate again
+          Replay this one
         </button>
       </div>
     </main>
