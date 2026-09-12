@@ -1,27 +1,59 @@
 /**
  * The game.
  *
- * A correct answer holds on a confirmation screen before moving on, so the
- * player gets the moment and the explanation rather than a jump cut.
+ * Four states before the investigation proper: title, case file, then play,
+ * then the reveal. A returning player skips straight back to where they were.
  */
 
 import { useState } from 'react';
 import case000 from './data/case000';
 import { useCase } from './state/useCase';
 import CaseView from './ui/Case';
+import CaseFileView from './ui/CaseFile';
 import PuzzleView from './ui/Puzzle';
 import RevealView from './ui/Reveal';
 import Solved from './ui/Solved';
+import Title from './ui/Title';
 import type { Puzzle } from './engine/types';
+
+type Screen = 'title' | 'casefile' | 'playing' | 'reveal';
 
 export default function App() {
   const game = useCase(case000);
-  const [showReveal, setShowReveal] = useState(false);
+
+  // Anything already inspected or solved means this is not a first visit,
+  // so the opening screens are skipped rather than shown again.
+  const returning =
+    game.progress.inspectedEvidence.length > 0 ||
+    Object.keys(game.progress.puzzles).length > 0;
+
+  const [screen, setScreen] = useState<Screen>(returning ? 'playing' : 'title');
   const [justSolved, setJustSolved] = useState<Puzzle | null>(null);
 
-  if (showReveal && case000.reveal) {
+  if (screen === 'title') {
     return (
-      <RevealView reveal={case000.reveal} onContinue={() => setShowReveal(false)} />
+      <Title
+        onBegin={() => setScreen('casefile')}
+        estimatedMinutes={case000.caseFile.estimatedMinutes}
+        stageCount={case000.puzzles.length}
+      />
+    );
+  }
+
+  if (screen === 'casefile') {
+    return (
+      <CaseFileView
+        caseFile={case000.caseFile}
+        stageCount={case000.puzzles.length}
+        evidenceCount={case000.evidence.length}
+        onOpen={() => setScreen('playing')}
+      />
+    );
+  }
+
+  if (screen === 'reveal' && case000.reveal) {
+    return (
+      <RevealView reveal={case000.reveal} onContinue={() => setScreen('playing')} />
     );
   }
 
@@ -59,7 +91,7 @@ export default function App() {
             if (!result.correct) return;
 
             if (puzzle.type === 'meta.assembly') {
-              setShowReveal(true);
+              setScreen('reveal');
             } else {
               setJustSolved(puzzle);
             }
