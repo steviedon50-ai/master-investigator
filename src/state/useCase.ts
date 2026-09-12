@@ -7,7 +7,13 @@
  */
 
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import type { CaseProgress, Investigation, Puzzle } from '../engine/types';
+import type {
+  CaseProgress,
+  HintLevel,
+  Investigation,
+  Note,
+  Puzzle,
+} from '../engine/types';
 import { validate, type SolverContext } from '../engine/puzzles';
 import { completionPercent, scoreCase } from '../engine/scoring';
 import { localAdapter, type StorageAdapter } from './storage';
@@ -83,13 +89,13 @@ export function useCase(
       if (!item) return;
       dispatch({ type: 'inspect-evidence', evidenceId, name: item.name });
       if (item.documentId) {
-        const doc = documentFor(item.documentId);
+        const doc = investigation.documents.find((d) => d.id === item.documentId);
         if (doc) {
           dispatch({ type: 'view-document', documentId: doc.id, name: item.name });
         }
       }
     },
-    [investigation, documentFor],
+    [investigation],
   );
 
   const answerStep = useCallback((puzzleId: string, stepId: string, answer: string) => {
@@ -125,27 +131,24 @@ export function useCase(
     [progress],
   );
 
-  const useHint = useCallback(
-    (puzzle: Puzzle, level: Parameters<typeof reduce>[1] extends never ? never : string) => {
-      const hint = puzzle.hints.find((h) => h.level === level);
-      if (!hint) return null;
-      dispatch({
-        type: 'use-hint',
-        puzzleId: puzzle.id,
-        level: hint.level,
-        title: puzzle.title,
-      });
-      return hint;
-    },
-    [],
-  );
+  const useHint = useCallback((puzzle: Puzzle, level: HintLevel) => {
+    const hint = puzzle.hints.find((h) => h.level === level);
+    if (!hint) return null;
+    dispatch({
+      type: 'use-hint',
+      puzzleId: puzzle.id,
+      level: hint.level,
+      title: puzzle.title,
+    });
+    return hint;
+  }, []);
 
   const hintsUsedFor = useCallback(
     (puzzleId: string) => progress.puzzles[puzzleId]?.hintsUsed ?? [],
     [progress],
   );
 
-  const addNote = useCallback((body: string, attachedTo?: Parameters<typeof reduce>[1] extends never ? never : undefined) => {
+  const addNote = useCallback((body: string, attachedTo?: Note['attachedTo']) => {
     dispatch({ type: 'add-note', body, attachedTo });
   }, []);
 
