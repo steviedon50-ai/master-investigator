@@ -158,3 +158,20 @@
   letter-spacing: 0.1em;
   min-height: 54px;
 }
+
+/* Moving on is the primary action; replaying is secondary. */
+
+.res__continue {
+  display: block;
+  width: 100%;
+  background: var(--brass);
+  color: #14100a;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.95rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  min-height: 54px;
+  margin-bottom: 0.75rem;
+}
