@@ -1,8 +1,8 @@
 /**
  * Case shell.
  *
- * Mobile-first: one section visible at a time, chosen from the bottom bar.
- * Desktop gets the same sections side by side via CSS, not a second component.
+ * Mobile-first: one section at a time, chosen from the bottom bar.
+ * Tapping evidence opens it full-screen over everything else.
  */
 
 import { useState } from 'react';
@@ -13,6 +13,7 @@ import type {
   Investigation,
   LogEntry,
 } from '../engine/types';
+import EvidenceDetail from './EvidenceDetail';
 
 type Tab = 'case' | 'evidence' | 'log' | 'notes';
 
@@ -67,8 +68,28 @@ export default function CaseView({
 }: Props) {
   const [tab, setTab] = useState<Tab>('case');
   const [draft, setDraft] = useState('');
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const total = investigation.evidence.length;
+  const open = evidence.find((e) => e.id === openId) ?? null;
+
+  const openEvidence = (id: string): void => {
+    onInspect(id);
+    setOpenId(id);
+  };
+
+  if (open) {
+    return (
+      <EvidenceDetail
+        evidence={open}
+        document={
+          investigation.documents.find((d) => d.id === open.documentId) ?? null
+        }
+        status={progress.evidenceStatus[open.id] ?? 'unresolved'}
+        onClose={() => setOpenId(null)}
+      />
+    );
+  }
 
   return (
     <div className="case">
@@ -83,17 +104,18 @@ export default function CaseView({
         </div>
       </header>
 
-      <div className="case__progress" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+      <div
+        className="case__progress"
+        role="progressbar"
+        aria-valuenow={percent}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div className="case__progress-fill" style={{ width: `${percent}%` }} />
       </div>
 
       <main className="case__body">
-        {tab === 'case' && (
-          <section className="case__panel">
-            <p className="case__briefing">{textOf(investigation.caseFile.briefing)}</p>
-            {children}
-          </section>
-        )}
+        {tab === 'case' && <section className="case__panel">{children}</section>}
 
         {tab === 'evidence' && (
           <section className="case__panel">
@@ -106,12 +128,17 @@ export default function CaseView({
                 const seen = progress.inspectedEvidence.includes(item.id);
                 return (
                   <li key={item.id}>
-                    <button type="button" className="ev__item" onClick={() => onInspect(item.id)}>
+                    <button
+                      type="button"
+                      className="ev__item"
+                      onClick={() => openEvidence(item.id)}
+                    >
                       <span className="ev__name">{item.name}</span>
                       <span className="ev__summary">{item.summary}</span>
                       <span className="ev__meta">
                         <span className={`ev__status ev__status--${status}`}>
-                          <span aria-hidden="true">{STATUS_MARK[status]}</span> {STATUS_LABEL[status]}
+                          <span aria-hidden="true">{STATUS_MARK[status]}</span>{' '}
+                          {STATUS_LABEL[status]}
                         </span>
                         {!seen && <span className="ev__unread">Not yet examined</span>}
                       </span>
@@ -190,7 +217,13 @@ export default function CaseView({
             onClick={() => setTab(id)}
             aria-current={tab === id}
           >
-            {id === 'case' ? 'Case' : id === 'evidence' ? 'Evidence' : id === 'log' ? 'Log' : 'Notes'}
+            {id === 'case'
+              ? 'Case'
+              : id === 'evidence'
+                ? 'Evidence'
+                : id === 'log'
+                  ? 'Log'
+                  : 'Notes'}
           </button>
         ))}
       </nav>
