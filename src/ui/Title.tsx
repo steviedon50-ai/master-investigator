@@ -1,9 +1,11 @@
 /**
  * Title screen.
  *
- * The game withholds its own name, so this screen has to do two jobs at once:
- * explain what you are about to do, and make the absence of a title feel
- * deliberate rather than broken.
+ * A case file on a desk under a lamp. Everything is drawn in CSS — no images,
+ * because there is no asset pipeline and a phone-only workflow to maintain.
+ *
+ * The boldness is spent on one thing: the file itself as real paper. The desk
+ * around it stays quiet.
  */
 
 interface Props {
@@ -14,34 +16,46 @@ interface Props {
 
 export default function Title({ onBegin, estimatedMinutes, stageCount }: Props) {
   return (
-    <main className="title">
-      <div className="title__inner">
-        <p className="title__number">Case 000</p>
+    <main className="desk">
+      {/* Papers beneath the file, only their edges showing. */}
+      <div className="desk__under desk__under--a" aria-hidden="true" />
+      <div className="desk__under desk__under--b" aria-hidden="true" />
 
-        <p className="title__mark" aria-hidden="true">
-          ?
-        </p>
+      <article className="folder">
+        <div className="folder__tab" aria-hidden="true">
+          <span className="folder__tab-text">000</span>
+        </div>
 
-        <h1 className="title__name">Identity unknown</h1>
+        <div className="folder__body">
+          <p className="folder__ref">CASE 000</p>
 
-        <p className="title__lede">
-          You are an investigator. A dossier has been left for you with no
-          covering letter, no sender, and no case name — only a number.
-        </p>
+          <p className="folder__stamp" aria-hidden="true">
+            ?
+          </p>
 
-        <p className="title__task">
-          Work the evidence and the dossier will tell you what it is called.
-          Finding that name is your first case.
-        </p>
+          <h1 className="folder__title">Identity unknown</h1>
 
-        <button type="button" className="title__begin" onClick={onBegin}>
-          Begin investigation
-        </button>
+          <p className="folder__rule" aria-hidden="true" />
 
-        <p className="title__meta">
-          {stageCount} stages · about {estimatedMinutes} minutes
-        </p>
-      </div>
+          <p className="folder__lede">
+            You are an investigator. A dossier has been left for you with no
+            covering letter, no sender, and no case name — only a number.
+          </p>
+
+          <p className="folder__task">
+            Work the evidence and the dossier will tell you what it is called.
+            Finding that name is your first case.
+          </p>
+
+          <p className="folder__meta">
+            {stageCount} stages · about {estimatedMinutes} minutes
+          </p>
+        </div>
+      </article>
+
+      <button type="button" className="desk__begin" onClick={onBegin}>
+        Begin investigation
+      </button>
     </main>
   );
 }
