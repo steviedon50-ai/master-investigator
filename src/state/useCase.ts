@@ -1,8 +1,12 @@
 /**
  * React binding for a single investigation. Autosaves on every change.
+ *
+ * Uses useState with an explicit type rather than useReducer: the reducer
+ * lives in progress.ts either way, and this form gives the compiler nothing
+ * to infer wrongly.
  */
 
-import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CaseProgress, HintLevel, Investigation, Puzzle } from '../engine/types';
 import { validate } from '../engine/puzzles';
 import { completionPercent, scoreCase } from '../engine/scoring';
@@ -24,20 +28,20 @@ export interface AnswerOutcome {
   feedback?: string;
 }
 
-function init(investigation: Investigation, adapter: StorageAdapter): CaseProgress {
-  return adapter.loadProgress(investigation.caseFile.id) ?? createProgress(investigation);
-}
-
 export function useCase(
   investigation: Investigation,
   adapter: StorageAdapter = localAdapter,
 ) {
-  const reducer = (state: CaseProgress, action: Action): CaseProgress =>
-    reduce(state, action);
-
-  const [progress, dispatch] = useReducer(reducer, init(investigation, adapter));
+  const [progress, setProgress] = useState<CaseProgress>(() => {
+    const saved = adapter.loadProgress(investigation.caseFile.id);
+    return saved ?? createProgress(investigation);
+  });
 
   const [lastOutcome, setLastOutcome] = useState<AnswerOutcome | null>(null);
+
+  const send = useCallback((action: Action) => {
+    setProgress((current) => reduce(current, action));
+  }, []);
 
   useEffect(() => {
     adapter.saveProgress(progress);
@@ -80,17 +84,20 @@ export function useCase(
     (evidenceId: string) => {
       const item = investigation.evidence.find((e) => e.id === evidenceId);
       if (!item) return;
-      dispatch({ type: 'inspect-evidence', evidenceId, name: item.name });
+      send({ type: 'inspect-evidence', evidenceId, name: item.name });
       if (item.documentId) {
-        dispatch({ type: 'view-document', documentId: item.documentId, name: item.name });
+        send({ type: 'view-document', documentId: item.documentId, name: item.name });
       }
     },
-    [investigation],
+    [investigation, send],
   );
 
-  const answerStep = useCallback((puzzleId: string, stepId: string, answer: string) => {
-    dispatch({ type: 'answer-step', puzzleId, stepId, answer });
-  }, []);
+  const answerStep = useCallback(
+    (puzzleId: string, stepId: string, answer: string) => {
+      send({ type: 'answer-step', puzzleId, stepId, answer });
+    },
+    [send],
+  );
 
   const submitAnswer = useCallback(
     (puzzle: Puzzle, answer: string): AnswerOutcome => {
@@ -100,12 +107,12 @@ export function useCase(
       });
 
       if (result.correct) {
-        dispatch({ type: 'solve-puzzle', puzzle });
+        send({ type: 'solve-puzzle', puzzle });
         if (puzzle.type === 'meta.assembly') {
-          dispatch({ type: 'submit-final', answer });
+          send({ type: 'submit-final', answer });
         }
       } else {
-        dispatch({ type: 'wrong-answer', puzzleId: puzzle.id });
+        send({ type: 'wrong-answer', puzzleId: puzzle.id });
       }
 
       const outcome: AnswerOutcome = {
@@ -116,28 +123,37 @@ export function useCase(
       setLastOutcome(outcome);
       return outcome;
     },
-    [progress],
+    [progress, send],
   );
 
-  const useHint = useCallback((puzzle: Puzzle, level: HintLevel) => {
-    const hint = puzzle.hints.find((h) => h.level === level);
-    if (!hint) return null;
-    dispatch({ type: 'use-hint', puzzleId: puzzle.id, level, title: puzzle.title });
-    return hint;
-  }, []);
+  const useHint = useCallback(
+    (puzzle: Puzzle, level: HintLevel) => {
+      const hint = puzzle.hints.find((h) => h.level === level);
+      if (!hint) return null;
+      send({ type: 'use-hint', puzzleId: puzzle.id, level, title: puzzle.title });
+      return hint;
+    },
+    [send],
+  );
 
   const hintsUsedFor = useCallback(
     (puzzleId: string): HintLevel[] => progress.puzzles[puzzleId]?.hintsUsed ?? [],
     [progress],
   );
 
-  const addNote = useCallback((body: string) => {
-    dispatch({ type: 'add-note', body });
-  }, []);
+  const addNote = useCallback(
+    (body: string) => {
+      send({ type: 'add-note', body });
+    },
+    [send],
+  );
 
-  const deleteNote = useCallback((noteId: string) => {
-    dispatch({ type: 'delete-note', noteId });
-  }, []);
+  const deleteNote = useCallback(
+    (noteId: string) => {
+      send({ type: 'delete-note', noteId });
+    },
+    [send],
+  );
 
   const clearOutcome = useCallback(() => {
     setLastOutcome(null);
