@@ -1,27 +1,57 @@
 /**
  * Scoring.
  *
- * The blueprint asks for five reported dimensions plus an overall rank.
- * Penalties are capped so that a player who struggles and then gets there
- * still finishes with a real score — the game should reward persistence,
- * not punish it into the floor.
+ * Five reported dimensions plus an overall rank. Two principles:
+ *
+ * 1. The dimensions must discriminate. A dimension that reads 100 for every
+ *    competent run tells the player nothing.
+ * 2. Rank is capped by difficulty. Legendary is not available on a tutorial —
+ *    if the top rank were reachable at Apprentice it would mean nothing at Black.
  */
 
 import type {
   CaseProgress,
+  Difficulty,
   Investigation,
   Rank,
   ScoreBreakdown,
   ScoringRules,
 } from './types';
 
-export function rankFor(total: number): Rank {
+/**
+ * The best rank each difficulty can award. A perfect Apprentice run is a
+ * Field Investigator — good work, but the ladder continues.
+ */
+const RANK_CEILING: Record<Difficulty, Rank> = {
+  apprentice: 'Field Investigator',
+  investigator: 'Senior Investigator',
+  expert: 'Master Investigator',
+  master: 'Legendary',
+  black: 'Legendary',
+};
+
+const RANK_ORDER: Rank[] = [
+  'Probationary',
+  'Junior Investigator',
+  'Field Investigator',
+  'Senior Investigator',
+  'Master Investigator',
+  'Legendary',
+];
+
+function rankFromScore(total: number): Rank {
   if (total >= 100) return 'Legendary';
   if (total >= 90) return 'Master Investigator';
   if (total >= 80) return 'Senior Investigator';
   if (total >= 70) return 'Field Investigator';
   if (total >= 60) return 'Junior Investigator';
   return 'Probationary';
+}
+
+export function rankFor(total: number, difficulty: Difficulty = 'master'): Rank {
+  const earned = rankFromScore(total);
+  const ceiling = RANK_CEILING[difficulty];
+  return RANK_ORDER.indexOf(earned) > RANK_ORDER.indexOf(ceiling) ? ceiling : earned;
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -47,9 +77,8 @@ function wrongAnswerTotal(progress: CaseProgress, rules: ScoringRules): number {
 }
 
 /**
- * Accuracy: how cleanly the puzzles were solved.
- * A first-time-correct run is 100; each wrong attempt costs, with a floor
- * so that a hard-won solve is still worth having.
+ * Accuracy. A flawless run scores 100; each wrong attempt costs steeply,
+ * because on an Apprentice case the answers are reachable without guessing.
  */
 function accuracyScore(progress: CaseProgress): number {
   const puzzles = Object.values(progress.puzzles);
@@ -57,13 +86,14 @@ function accuracyScore(progress: CaseProgress): number {
   if (solved === 0) return 0;
 
   const wrong = puzzles.reduce((sum, p) => sum + p.wrongAttempts, 0);
-  return clamp(100 - (wrong / solved) * 20, 30, 100);
+  return clamp(100 - (wrong / solved) * 30, 20, 100);
 }
 
 /**
- * Reasoning: red herrings spotted, contradictions resolved, connections drawn.
- * Measured against what the case actually contains, so a case with no red
- * herrings does not penalise the player for failing to find one.
+ * Reasoning. Finding the planted red herring and contradiction is the floor,
+ * not the ceiling — those are handed to you by the puzzle. The upper range is
+ * reserved for judgements the player made unprompted: evidence they marked
+ * themselves, connections they drew.
  */
 function reasoningScore(
   progress: CaseProgress,
@@ -76,25 +106,25 @@ function reasoningScore(
     (e) => e.authoring?.unreliable,
   ).length;
 
-  const herringsFound = investigation.evidence.filter(
-    (e) => e.authoring?.redHerring && progress.evidenceStatus[e.id] === 'red-herring',
-  ).length;
-  const contradictionsFound = investigation.evidence.filter(
-    (e) => e.authoring?.unreliable && progress.evidenceStatus[e.id] === 'contradicted',
+  const found = investigation.evidence.filter(
+    (e) =>
+      (e.authoring?.redHerring && progress.evidenceStatus[e.id] === 'red-herring') ||
+      (e.authoring?.unreliable && progress.evidenceStatus[e.id] === 'contradicted'),
   ).length;
 
   const available = herringsAvailable + contradictionsAvailable;
-  if (available === 0) return 100;
+  const base = available === 0 ? 75 : (found / available) * 75;
 
-  const found = herringsFound + contradictionsFound;
-  const base = (found / available) * 100;
-
-  // Drawing connections is credited, but cannot carry the score alone.
+  // The last quarter has to be earned by your own analysis.
   const connections = progress.links.filter((l) => l.playerMade).length;
-  return clamp(base + Math.min(connections * 2, 10), 0, 100);
+  const notes = progress.notes.length;
+
+  const ownWork = Math.min(connections * 8, 15) + Math.min(notes * 3, 10);
+
+  return clamp(base + ownWork, 0, 100);
 }
 
-/** Research: proportion of research steps answered without revealing. */
+/** Research: proportion answered without a strong hint or a reveal. */
 function researchScore(
   progress: CaseProgress,
   investigation: Investigation,
@@ -106,25 +136,37 @@ function researchScore(
   for (const puzzle of researchPuzzles) {
     const state = progress.puzzles[puzzle.id];
     if (!state?.solved) continue;
-    score += state.hintsUsed.includes('reveal') ? 40 : 100;
+    if (state.hintsUsed.includes('reveal')) score += 25;
+    else if (state.hintsUsed.includes('strong')) score += 55;
+    else if (state.hintsUsed.includes('technique')) score += 80;
+    else score += 100;
   }
   return clamp(score / researchPuzzles.length, 0, 100);
 }
 
-/** Efficiency: time against par, plus restraint with hints. */
+/**
+ * Efficiency. Par earns a solid score; the top of the range needs a genuinely
+ * fast run. Hints cost here as well as in the penalty, because using them is
+ * the opposite of efficient.
+ */
 function efficiencyScore(
   progress: CaseProgress,
   rules: ScoringRules,
   timeSeconds: number,
 ): number {
   const ratio = timeSeconds / rules.parTimeSeconds;
-  const timePart = ratio <= 1 ? 100 : clamp(100 - (ratio - 1) * 40, 40, 100);
+
+  // Half par or better is exceptional; par is respectable; over par decays.
+  let timePart: number;
+  if (ratio <= 0.5) timePart = 100;
+  else if (ratio <= 1) timePart = 100 - (ratio - 0.5) * 50;
+  else timePart = clamp(75 - (ratio - 1) * 45, 25, 75);
 
   const hintCount = Object.values(progress.puzzles).reduce(
     (sum, p) => sum + p.hintsUsed.length,
     0,
   );
-  return clamp(timePart - hintCount * 5, 0, 100);
+  return clamp(timePart - hintCount * 6, 0, 100);
 }
 
 export function scoreCase(
@@ -144,6 +186,8 @@ export function scoreCase(
   const hintPenalty = hintPenaltyTotal(progress, rules);
   const wrongAnswerPenalty = wrongAnswerTotal(progress, rules);
 
+  // Bonuses are small and specific — they mark what you did, not a general
+  // reward for finishing.
   let bonuses = 0;
   const herringsFound = investigation.evidence.filter(
     (e) => e.authoring?.redHerring && progress.evidenceStatus[e.id] === 'red-herring',
@@ -154,10 +198,7 @@ export function scoreCase(
   if (herringsFound > 0) bonuses += rules.redHerringBonus;
   if (contradictionsFound > 0) bonuses += rules.contradictionBonus;
   if (progress.links.some((l) => l.playerMade)) bonuses += rules.connectionBonus;
-  if (timeSeconds <= rules.parTimeSeconds) bonuses += rules.timeBonusMax;
 
-  // The four dimensions average to the working score, then bonuses and
-  // penalties apply. Capped at the base so 100 stays the ceiling.
   const core = (accuracy + reasoning + research + efficiency) / 4;
   const total = clamp(
     Math.round(core + bonuses - hintPenalty - wrongAnswerPenalty),
@@ -175,7 +216,7 @@ export function scoreCase(
     hintPenalty,
     wrongAnswerPenalty,
     bonuses,
-    rank: rankFor(total),
+    rank: rankFor(total, investigation.caseFile.difficulty),
   };
 }
 
