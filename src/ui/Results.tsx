@@ -1,9 +1,10 @@
 /**
  * Results.
  *
- * Shown once the case is closed. The five dimensions the blueprint asks for,
- * with the rank as the headline — and each dimension explained in a word, so
- * a low score tells you what to do differently rather than just that you failed.
+ * The four dimensions are the score, so the facts below them are reported as
+ * what happened rather than as deductions — hints and wrong answers already
+ * cost you inside the dimensions, and showing them twice as minus figures
+ * would imply a penalty that is not there.
  */
 
 import type { ScoreBreakdown } from '../engine/types';
@@ -20,7 +21,7 @@ const DIMENSIONS: Array<{
   note: string;
 }> = [
   { key: 'accuracy', label: 'Accuracy', note: 'How cleanly you answered' },
-  { key: 'reasoning', label: 'Reasoning', note: 'Red herrings and contradictions' },
+  { key: 'reasoning', label: 'Reasoning', note: 'What you judged for yourself' },
   { key: 'research', label: 'Research', note: 'Answers found without revealing' },
   { key: 'efficiency', label: 'Efficiency', note: 'Time and restraint with hints' },
 ];
@@ -32,7 +33,13 @@ function duration(seconds: number): string {
   return `${m}m ${String(s).padStart(2, '0')}s`;
 }
 
+function plural(n: number, one: string, many: string): string {
+  return `${n} ${n === 1 ? one : many}`;
+}
+
 export default function Results({ score, caseTitle, onRestart }: Props) {
+  const hintCount = score.hintPenalty > 0 ? score.hintPenalty : 0;
+
   return (
     <main className="res">
       <div className="res__inner">
@@ -70,22 +77,26 @@ export default function Results({ score, caseTitle, onRestart }: Props) {
             <dd>{duration(score.timeSeconds)}</dd>
           </div>
           <div>
-            <dt>Bonuses</dt>
-            <dd>+{score.bonuses}</dd>
-          </div>
-          <div>
-            <dt>Hints</dt>
-            <dd>−{score.hintPenalty}</dd>
+            <dt>Hints used</dt>
+            <dd>{hintCount === 0 ? 'None' : plural(hintCount, 'hint', 'hints')}</dd>
           </div>
           <div>
             <dt>Wrong answers</dt>
-            <dd>−{score.wrongAnswerPenalty}</dd>
+            <dd>
+              {score.wrongAnswerPenalty === 0
+                ? 'None'
+                : plural(score.wrongAnswerPenalty, 'attempt', 'attempts')}
+            </dd>
+          </div>
+          <div>
+            <dt>Rank ceiling</dt>
+            <dd>Apprentice case</dd>
           </div>
         </dl>
 
         <p className="res__next">
-          Your real cases are next. Every one is generated for you alone — the
-          same case number, a different investigation.
+          Harder cases carry higher ranks. This was an apprentice investigation —
+          Master and Black cases are where Legendary lives.
         </p>
 
         <button type="button" className="res__again" onClick={onRestart}>
