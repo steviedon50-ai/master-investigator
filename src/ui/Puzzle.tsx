@@ -51,6 +51,11 @@ const HINT_LABELS: Record<HintLevel, string> = {
   reveal: 'Reveal the answer',
 };
 
+/** Opens a search in a new tab. Leaving the game is safe — progress persists. */
+function searchUrl(query: string): string {
+  return `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
+}
+
 export default function PuzzleView({
   puzzle,
   stageCount,
@@ -138,6 +143,15 @@ export default function PuzzleView({
                     placeholder="Name"
                     onChange={(e) => onAnswerStep(step.id, e.target.value)}
                   />
+                  <a
+                    className="pz__search"
+                    href={searchUrl(step.prompt)}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    aria-label={`Search for: ${step.prompt}`}
+                  >
+                    Search
+                  </a>
                   <span className={`pz__step-mark${done ? ' pz__step-mark--done' : ''}`}>
                     {done ? '✓' : '—'}
                   </span>
