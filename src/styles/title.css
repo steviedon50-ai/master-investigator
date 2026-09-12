@@ -1,0 +1,176 @@
+/* Title screen and case file. The two screens before the investigation. */
+
+.title,
+.cf {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem var(--gutter);
+  padding-top: calc(2rem + var(--safe-top));
+  padding-bottom: calc(2rem + var(--safe-bottom));
+}
+
+.title__inner,
+.cf__inner {
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+/* --- Title -------------------------------------------------------- */
+
+.title__number {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  color: var(--brass);
+  margin: 0 0 2rem;
+}
+
+/* The withheld name, standing in for the title that has not been earned. */
+.title__mark {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 18vw, 5.5rem);
+  line-height: 1;
+  color: var(--paper);
+  margin: 0 0 0.75rem;
+  opacity: 0.85;
+}
+
+.title__name {
+  font-size: var(--step-3);
+  color: var(--paper);
+  margin: 0 0 1.5rem;
+}
+
+.title__lede {
+  color: var(--text);
+  font-size: 1.02rem;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.title__task {
+  color: var(--text-dim);
+  line-height: 1.6;
+  border-left: 2px solid var(--brass);
+  padding-left: 1rem;
+  margin: 0 0 2.25rem;
+}
+
+.title__begin {
+  display: block;
+  width: 100%;
+  background: var(--brass);
+  color: #14100a;
+  border: 0;
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  min-height: 54px;
+}
+
+.title__meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #5f6560;
+  text-align: center;
+  margin: 1rem 0 0;
+}
+
+/* --- Case file ----------------------------------------------------- */
+
+.cf__number {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: var(--brass);
+  margin: 0 0 0.4rem;
+}
+
+.cf__title {
+  font-size: var(--step-2);
+  color: var(--paper);
+  margin: 0 0 1.5rem;
+}
+
+.cf__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  margin: 0 0 1.75rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.cf__facts dt {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+
+.cf__facts dd {
+  margin: 0;
+  color: var(--paper);
+  font-size: 0.95rem;
+}
+
+.cf__briefing {
+  color: var(--text-dim);
+  line-height: 1.65;
+  white-space: pre-line;
+  margin: 0 0 2rem;
+}
+
+.cf__heading {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.13em;
+  color: var(--text-dim);
+  margin: 0 0 0.75rem;
+}
+
+.cf__objectives {
+  list-style: none;
+  margin: 0 0 2.25rem;
+  padding: 0;
+}
+
+.cf__objectives li {
+  position: relative;
+  padding-left: 1.4rem;
+  margin-bottom: 0.6rem;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.cf__objectives li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--brass);
+  border-radius: 1px;
+}
+
+.cf__open {
+  display: block;
+  width: 100%;
+  background: var(--brass);
+  color: #14100a;
+  border: 0;
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  min-height: 54px;
+}
