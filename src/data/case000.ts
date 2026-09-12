@@ -212,3 +212,142 @@ export const documents: InvestigationDocument[] = [
     hiddenClue: null,
   },
 ];
+
+export const puzzles: Puzzle[] = [
+  {
+    id: 'pz-inspect',
+    type: 'inspection',
+    stage: 1,
+    difficulty: 'apprentice',
+    title: 'Open the dossier',
+    description:
+      'Every investigation starts the same way: look at what you actually have. ' +
+      'Go to Evidence and open all four items, then come back here.',
+    data: {
+      requiresInspected: ['ev-telegram', 'ev-statement', 'ev-cutting', 'ev-watch'],
+    },
+    solution: null,
+    acceptedAnswers: [],
+    dependencies: [],
+    unlockConditions: [],
+    researchRequired: false,
+    teaches: ['case-file', 'evidence-list', 'document-viewer'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'Four items are open to you now. Tap each one and read it.',
+      },
+    ],
+    explanation:
+      'Inspecting an item logs it. Every clue in this case is inside a document — ' +
+      'the puzzle will tell you which one, but it will never copy the clue out for you.',
+    rewards: { log: 'Dossier opened' },
+    nextPuzzles: ['pz-morse'],
+  },
+  {
+    id: 'pz-morse',
+    type: 'cipher.morse',
+    stage: 2,
+    difficulty: 'apprentice',
+    title: 'The marks below the message',
+    description:
+      'Open the telegram. It refuses to write a name, then prints three groups of marks ' +
+      'below the message. Decode them and enter the word they spell.',
+    data: { documentId: 'doc-telegram', alphabet: 'international-morse' },
+    solution: 'THE',
+    acceptedAnswers: ['the'],
+    dependencies: ['pz-inspect'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-inspect' }],
+    researchRequired: false,
+    teaches: ['cipher', 'answer-submission', 'hints'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'Dots and dashes, sent by telegraph. The clue is the medium.',
+      },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'Morse code. Three groups means three letters. A single dash is one of the commonest letters in English.',
+      },
+      { level: 'strong', penalty: 20, text: 'Dash is T. Four dots is H. A single dot is E.' },
+      { level: 'reveal', penalty: 40, text: 'The word is THE.' },
+    ],
+    explanation:
+      'Morse is language-independent, which is why it is the first cipher you meet. ' +
+      'Note where the clue was: on the document, not on this screen. That holds for the rest of the case.',
+    rewards: {
+      evidence: ['ev-register'],
+      fragment: { slot: 1, word: 'THE' },
+      log: 'First word recovered',
+    },
+    nextPuzzles: ['pz-acrostic'],
+  },
+  {
+    id: 'pz-acrostic',
+    type: 'language.acrostic',
+    stage: 3,
+    difficulty: 'apprentice',
+    title: 'What the porter did not say',
+    description:
+      'Open the night porter\u2019s statement. Six numbered lines that tell you almost nothing. ' +
+      'It was not written for its content. Read down the left-hand edge.',
+    data: { documentId: 'doc-statement', extraction: 'first-letter-per-line', lines: 6 },
+    solution: 'MASTER',
+    acceptedAnswers: ['master'],
+    dependencies: ['pz-morse'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-morse' }],
+    researchRequired: false,
+    teaches: ['document-inspection', 'hidden-clue', 'notes'],
+    hints: [
+      { level: 'direction', penalty: 5, text: 'Six lines, six letters.' },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'An acrostic: take the first letter of each line in order.',
+      },
+      { level: 'strong', penalty: 20, text: 'M, A, S, T, E, R.' },
+      { level: 'reveal', penalty: 40, text: 'The word is MASTER.' },
+    ],
+    explanation:
+      'Not every document hides something. This one announced itself by being oddly ' +
+      'numbered and oddly empty. Suspect the format before you suspect the content.',
+    rewards: { fragment: { slot: 2, word: 'MASTER' }, log: 'Second word recovered' },
+    nextPuzzles: ['pz-anagram'],
+  },
+  {
+    id: 'pz-anagram',
+    type: 'language.anagram',
+    stage: 4,
+    difficulty: 'apprentice',
+    title: 'The guest with no address',
+    description:
+      'Open the hotel register. Three guests gave a town; the fourth entry gives a ' +
+      'description in place of a name, in a different hand. Rearrange its twelve letters ' +
+      'into a single word.',
+    data: { documentId: 'doc-register' },
+    solution: 'INVESTIGATOR',
+    acceptedAnswers: ['investigator'],
+    dependencies: ['pz-acrostic'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-acrostic' }],
+    researchRequired: false,
+    teaches: ['wordplay', 'evidence-connection'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'The entry is not a name and not a lie. It is the same word, disturbed.',
+      },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'An anagram of all twelve letters. The word describes what you are doing right now.',
+      },
+      { level: 'strong', penalty: 20, text: 'It begins with I and ends with R.' },
+      { level: 'reveal', penalty: 40, text: 'The word is INVESTIGATOR.' },
+    ],
+    explanation:
+      'Language puzzles like this only work in the language they were built for. Generated ' +
+      'cases build their word puzzles in your chosen language rather than transl
