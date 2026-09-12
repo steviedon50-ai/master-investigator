@@ -1,12 +1,13 @@
 /**
  * Scoring.
  *
- * Five reported dimensions plus an overall rank. Two principles:
+ * Five reported dimensions plus an overall rank. Three principles:
  *
  * 1. The dimensions must discriminate. A dimension that reads 100 for every
  *    competent run tells the player nothing.
- * 2. Rank is capped by difficulty. Legendary is not available on a tutorial —
- *    if the top rank were reachable at Apprentice it would mean nothing at Black.
+ * 2. The total is the dimensions. Nothing is added on top — a headline number
+ *    that contradicts the bars beneath it is worse than no number.
+ * 3. Rank is capped by difficulty. Legendary is not available on a tutorial.
  */
 
 import type {
@@ -76,10 +77,7 @@ function wrongAnswerTotal(progress: CaseProgress, rules: ScoringRules): number {
   return Math.min(attempts * rules.wrongAnswerPenalty, rules.wrongAnswerFloor);
 }
 
-/**
- * Accuracy. A flawless run scores 100; each wrong attempt costs steeply,
- * because on an Apprentice case the answers are reachable without guessing.
- */
+/** Accuracy. A flawless run scores 100; each wrong attempt costs steeply. */
 function accuracyScore(progress: CaseProgress): number {
   const puzzles = Object.values(progress.puzzles);
   const solved = puzzles.filter((p) => p.solved).length;
@@ -90,20 +88,16 @@ function accuracyScore(progress: CaseProgress): number {
 }
 
 /**
- * Reasoning. Finding the planted red herring and contradiction is the floor,
- * not the ceiling — those are handed to you by the puzzle. The upper range is
- * reserved for judgements the player made unprompted: evidence they marked
- * themselves, connections they drew.
+ * Reasoning. Finding the planted red herring and contradiction is the floor —
+ * the puzzle hands those to you. The upper quarter is reserved for judgements
+ * made unprompted: your own notes, your own connections.
  */
 function reasoningScore(
   progress: CaseProgress,
   investigation: Investigation,
 ): number {
-  const herringsAvailable = investigation.evidence.filter(
-    (e) => e.authoring?.redHerring,
-  ).length;
-  const contradictionsAvailable = investigation.evidence.filter(
-    (e) => e.authoring?.unreliable,
+  const available = investigation.evidence.filter(
+    (e) => e.authoring?.redHerring || e.authoring?.unreliable,
   ).length;
 
   const found = investigation.evidence.filter(
@@ -112,13 +106,10 @@ function reasoningScore(
       (e.authoring?.unreliable && progress.evidenceStatus[e.id] === 'contradicted'),
   ).length;
 
-  const available = herringsAvailable + contradictionsAvailable;
   const base = available === 0 ? 75 : (found / available) * 75;
 
-  // The last quarter has to be earned by your own analysis.
   const connections = progress.links.filter((l) => l.playerMade).length;
   const notes = progress.notes.length;
-
   const ownWork = Math.min(connections * 8, 15) + Math.min(notes * 3, 10);
 
   return clamp(base + ownWork, 0, 100);
@@ -145,9 +136,9 @@ function researchScore(
 }
 
 /**
- * Efficiency. Par earns a solid score; the top of the range needs a genuinely
- * fast run. Hints cost here as well as in the penalty, because using them is
- * the opposite of efficient.
+ * Efficiency. Half par or better is exceptional; par is respectable; beyond
+ * par decays. Hints cost here as well as in the penalty — using one is the
+ * opposite of efficient.
  */
 function efficiencyScore(
   progress: CaseProgress,
@@ -156,7 +147,6 @@ function efficiencyScore(
 ): number {
   const ratio = timeSeconds / rules.parTimeSeconds;
 
-  // Half par or better is exceptional; par is respectable; over par decays.
   let timePart: number;
   if (ratio <= 0.5) timePart = 100;
   else if (ratio <= 1) timePart = 100 - (ratio - 0.5) * 50;
@@ -186,22 +176,14 @@ export function scoreCase(
   const hintPenalty = hintPenaltyTotal(progress, rules);
   const wrongAnswerPenalty = wrongAnswerTotal(progress, rules);
 
-  // Bonuses are small and specific — they mark what you did, not a general
-  // reward for finishing.
-  let bonuses = 0;
-  const herringsFound = investigation.evidence.filter(
-    (e) => e.authoring?.redHerring && progress.evidenceStatus[e.id] === 'red-herring',
-  ).length;
-  const contradictionsFound = investigation.evidence.filter(
-    (e) => e.authoring?.unreliable && progress.evidenceStatus[e.id] === 'contradicted',
-  ).length;
-  if (herringsFound > 0) bonuses += rules.redHerringBonus;
-  if (contradictionsFound > 0) bonuses += rules.contradictionBonus;
-  if (progress.links.some((l) => l.playerMade)) bonuses += rules.connectionBonus;
-
-  const core = (accuracy + reasoning + research + efficiency) / 4;
+  /*
+   * The four dimensions are the score. Red herrings and contradictions already
+   * feed reasoning, so awarding a separate bonus for them would count the same
+   * work twice — and would let the total reach 100 while the bars beneath it
+   * plainly do not.
+   */
   const total = clamp(
-    Math.round(core + bonuses - hintPenalty - wrongAnswerPenalty),
+    Math.round((accuracy + reasoning + research + efficiency) / 4),
     0,
     rules.base,
   );
@@ -215,7 +197,7 @@ export function scoreCase(
     timeSeconds,
     hintPenalty,
     wrongAnswerPenalty,
-    bonuses,
+    bonuses: 0,
     rank: rankFor(total, investigation.caseFile.difficulty),
   };
 }
