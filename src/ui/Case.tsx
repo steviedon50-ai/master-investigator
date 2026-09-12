@@ -15,7 +15,15 @@ import type {
 } from '../engine/types';
 import EvidenceDetail from './EvidenceDetail';
 
-type Tab = 'case' | 'evidence' | 'log' | 'notes';
+type Tab = 'case' | 'evidence' | 'log' | 'notes' | 'more';
+
+const TAB_LABELS: Record<Tab, string> = {
+  case: 'Case',
+  evidence: 'Evidence',
+  log: 'Log',
+  notes: 'Notes',
+  more: 'More',
+};
 
 const STATUS_LABEL: Record<EvidenceStatus, string> = {
   unresolved: 'Unresolved',
@@ -53,6 +61,7 @@ interface Props {
   onInspect: (evidenceId: string) => void;
   onAddNote: (body: string) => void;
   onDeleteNote: (noteId: string) => void;
+  onRestart: () => void;
 }
 
 export default function CaseView({
@@ -65,10 +74,12 @@ export default function CaseView({
   onInspect,
   onAddNote,
   onDeleteNote,
+  onRestart,
 }: Props) {
   const [tab, setTab] = useState<Tab>('case');
   const [draft, setDraft] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [confirmRestart, setConfirmRestart] = useState(false);
 
   const total = investigation.evidence.length;
   const open = evidence.find((e) => e.id === openId) ?? null;
@@ -206,10 +217,66 @@ export default function CaseView({
             </ul>
           </section>
         )}
+
+        {tab === 'more' && (
+          <section className="case__panel">
+            <p className="case__heading">This case</p>
+
+            <dl className="more__facts">
+              <div>
+                <dt>Score</dt>
+                <dd>{score} / 100</dd>
+              </div>
+              <div>
+                <dt>Complete</dt>
+                <dd>{percent}%</dd>
+              </div>
+              <div>
+                <dt>Evidence seen</dt>
+                <dd>
+                  {progress.inspectedEvidence.length} of {total}
+                </dd>
+              </div>
+              <div>
+                <dt>Notes</dt>
+                <dd>{progress.notes.length}</dd>
+              </div>
+            </dl>
+
+            <p className="case__heading">Start over</p>
+
+            {confirmRestart ? (
+              <div className="more__confirm">
+                <p className="more__warning">
+                  This erases your progress, your notes and your score for this case.
+                  It cannot be undone.
+                </p>
+                <button type="button" className="more__danger" onClick={onRestart}>
+                  Yes, erase and start again
+                </button>
+                <button
+                  type="button"
+                  className="more__cancel"
+                  onClick={() => setConfirmRestart(false)}
+                >
+                  Keep my progress
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="more__restart"
+                onClick={() => setConfirmRestart(true)}
+              >
+                Restart this case
+              </button>
+            )}
+          </section>
+        )}
       </main>
 
       <nav className="case__nav">
-        {(['case', 'evidence', 'log', 'notes'] as Tab[]).map((id) => (
+        {(['case', 'evidence', 'log', 'notes', 'more'] as Tab[]).map((id) => (
           <button
             key={id}
             type="button"
@@ -217,13 +284,7 @@ export default function CaseView({
             onClick={() => setTab(id)}
             aria-current={tab === id}
           >
-            {id === 'case'
-              ? 'Case'
-              : id === 'evidence'
-                ? 'Evidence'
-                : id === 'log'
-                  ? 'Log'
-                  : 'Notes'}
+            {TAB_LABELS[id]}
           </button>
         ))}
       </nav>
