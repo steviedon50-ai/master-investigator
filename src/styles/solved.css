@@ -1,0 +1,88 @@
+/* Solved confirmation. A beat between stages, not a banner. */
+
+.solved {
+  padding: 2.5rem var(--gutter) 3rem;
+  max-width: 34rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.solved__mark {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  color: var(--verdigris);
+  margin: 0 0 1.75rem;
+}
+
+.solved__label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin: 0 0 0.6rem;
+}
+
+/* The recovered word is the reward. It gets the largest type on the screen. */
+.solved__word {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 9vw, 2.6rem);
+  letter-spacing: 0.1em;
+  color: var(--paper);
+  margin: 0 0 2rem;
+  overflow-wrap: break-word;
+}
+
+.solved__title {
+  font-size: var(--step-2);
+  color: var(--paper);
+  margin: 0 0 2rem;
+}
+
+.solved__explanation {
+  text-align: left;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.65;
+  border-left: 2px solid var(--brass);
+  padding-left: 1rem;
+  margin: 0 auto 1.5rem;
+  max-width: 42ch;
+}
+
+.solved__clean {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--verdigris);
+  margin: 0 0 1.5rem;
+}
+
+.solved__continue {
+  width: 100%;
+  background: var(--brass);
+  color: #14100a;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.95rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  min-height: 52px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .solved__word {
+    animation: solved-word 0.6s ease both;
+  }
+}
+
+@keyframes solved-word {
+  from {
+    opacity: 0;
+    letter-spacing: 0.4em;
+  }
+  to {
+    opacity: 1;
+  }
+}
