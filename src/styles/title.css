@@ -1,5 +1,5 @@
-/* Title screen: a case file on a desk under a lamp.
-   Everything drawn in CSS. The desk is quiet; the file is the subject. */
+/* The desk. Both opening screens live here — the folder closed, then open.
+   Everything drawn in CSS. The desk is quiet; the folder is the subject. */
 
 .desk {
   position: relative;
@@ -13,8 +13,6 @@
   padding-bottom: calc(2.5rem + var(--safe-bottom));
   overflow: hidden;
 
-  /* Lamp from the upper left, falling across a dark desk. Two layers:
-     a tight warm pool, then a wide dim wash so the corners are not black. */
   background:
     radial-gradient(
       70% 50% at 22% 8%,
@@ -28,6 +26,12 @@
       rgba(255, 244, 224, 0) 65%
     ),
     #0a0d0c;
+}
+
+/* The open file is taller than the screen, so it scrolls rather than centres. */
+.desk--open {
+  justify-content: flex-start;
+  overflow: visible;
 }
 
 /* Wood grain, so faint it reads as texture rather than pattern. */
@@ -45,7 +49,7 @@
   );
 }
 
-/* --- Papers under the file ----------------------------------------- */
+/* --- Papers under the closed file ----------------------------------- */
 
 .desk__under {
   position: absolute;
@@ -68,45 +72,50 @@
   opacity: 0.32;
 }
 
-/* --- The folder ----------------------------------------------------- */
+/* --- The folder ------------------------------------------------------ */
 
 .folder {
   position: relative;
-  width: min(86vw, 26rem);
+  width: min(88vw, 27rem);
   transform: rotate(-1deg);
+}
+
+/* Open, it sits square to the reader — you have picked it up. */
+.folder--open {
+  transform: none;
+  width: min(94vw, 30rem);
 }
 
 .folder__tab {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 5.5rem;
   margin-left: 1.5rem;
-  background: #c2a878;
-  border-radius: 4px 4px 0 0;
-  padding: 0.4rem 0 0.3rem;
+  margin-bottom: -2px;
+  background: #b89a63;
+  border-radius: 5px 5px 0 0;
+  padding: 0.45rem 0 0.4rem;
   text-align: center;
-  box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 -1px 5px rgba(0, 0, 0, 0.3);
 }
 
 .folder__tab-text {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.2em;
-  color: #3a2f18;
+  color: #2e2513;
 }
 
 .folder__body {
   position: relative;
-  background: linear-gradient(160deg, #cdb488 0%, #c0a679 55%, #b69c6f 100%);
-  border-radius: 0 4px 3px 3px;
+  background: linear-gradient(162deg, #b89a63 0%, #ab8d57 58%, #a2854f 100%);
+  border-radius: 0 5px 4px 4px;
   padding: 1.6rem 1.4rem 1.5rem;
-  /* Sitting on a desk, not floating: a tight contact shadow plus a soft one. */
   box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.6),
-    0 14px 34px rgba(0, 0, 0, 0.5);
+    0 1px 2px rgba(0, 0, 0, 0.65),
+    0 16px 38px rgba(0, 0, 0, 0.55);
 }
 
-/* The crease where a folder is scored to fold. */
 .folder__body::before {
   content: '';
   position: absolute;
@@ -114,55 +123,55 @@
   right: 0;
   top: 0.55rem;
   height: 1px;
-  background: rgba(0, 0, 0, 0.13);
+  background: rgba(0, 0, 0, 0.14);
 }
+
+/* --- Closed file, title screen ---------------------------------------- */
 
 .folder__ref {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.22em;
-  color: #5b4a28;
+  color: #4a3c1d;
   margin: 0 0 1.25rem;
 }
 
-/* The withheld name. Stamped rather than typed — rotated, ink-heavy,
-   sitting slightly proud of the card. */
 .folder__stamp {
   font-family: var(--font-display);
   font-size: 4.5rem;
   line-height: 1;
-  color: rgba(60, 40, 22, 0.55);
+  color: rgba(45, 30, 14, 0.6);
   margin: 0 0 0.5rem;
   transform: rotate(-6deg);
   transform-origin: left center;
-  text-shadow: 0 1px 0 rgba(255, 250, 235, 0.22);
+  text-shadow: 0 1px 0 rgba(255, 250, 235, 0.2);
 }
 
 .folder__title {
   font-size: clamp(1.7rem, 8vw, 2.3rem);
   line-height: 1.1;
-  color: #241c0e;
+  color: #1d1608;
   margin: 0 0 1rem;
 }
 
 .folder__rule {
   height: 1px;
-  background: rgba(70, 55, 30, 0.28);
+  background: rgba(55, 42, 20, 0.35);
   margin: 0 0 1.1rem;
 }
 
 .folder__lede {
-  color: #3a2f1a;
+  color: #2f2510;
   font-size: 0.98rem;
   line-height: 1.55;
   margin: 0 0 0.9rem;
 }
 
 .folder__task {
-  color: #4a3c22;
+  color: #3d3117;
   font-size: 0.92rem;
   line-height: 1.55;
-  border-left: 2px solid rgba(70, 55, 30, 0.4);
+  border-left: 2px solid rgba(55, 42, 20, 0.45);
   padding-left: 0.85rem;
   margin: 0 0 1.25rem;
 }
@@ -171,16 +180,117 @@
   font-family: var(--font-mono);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
-  color: #6a5936;
+  color: #59492a;
   margin: 0;
 }
 
-/* --- Begin ---------------------------------------------------------- */
+/* --- Open file, case screen -------------------------------------------- */
+
+.sheet__head {
+  margin-bottom: 1.1rem;
+}
+
+.sheet__ref {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  color: #4a3c1d;
+  margin: 0 0 0.3rem;
+}
+
+.sheet__title {
+  font-size: clamp(1.4rem, 6.5vw, 1.9rem);
+  line-height: 1.15;
+  color: #1d1608;
+  margin: 0;
+}
+
+.sheet__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 1rem;
+  margin: 0 0 1.5rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid rgba(55, 42, 20, 0.3);
+  border-bottom: 1px solid rgba(55, 42, 20, 0.3);
+}
+
+.sheet__facts dt {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: #5c4b28;
+  margin-bottom: 0.15rem;
+}
+
+.sheet__facts dd {
+  margin: 0;
+  color: #241c0b;
+  font-size: 0.92rem;
+}
+
+.sheet__briefing {
+  color: #2f2510;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  margin: 0 0 1.75rem;
+}
+
+.sheet__heading {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.15em;
+  color: #5c4b28;
+  margin: 0 0 0.7rem;
+}
+
+.sheet__objectives {
+  list-style: none;
+  margin: 0 0 1.75rem;
+  padding: 0;
+}
+
+.sheet__objectives li {
+  position: relative;
+  padding-left: 1.4rem;
+  margin-bottom: 0.55rem;
+  color: #2f2510;
+  font-size: 0.92rem;
+}
+
+/* Empty checkboxes, as on a printed form. */
+.sheet__objectives li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(55, 42, 20, 0.55);
+}
+
+/* A clerk's stamp at the foot of the jacket. */
+.sheet__filed {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: rgba(45, 30, 14, 0.45);
+  border: 1px solid rgba(45, 30, 14, 0.3);
+  border-radius: 2px;
+  padding: 0.4rem 0.6rem;
+  display: inline-block;
+  transform: rotate(-1.5deg);
+  margin: 0;
+}
+
+/* --- Begin ------------------------------------------------------------- */
 
 .desk__begin {
   position: relative;
-  margin-top: 2rem;
-  width: min(86vw, 26rem);
+  margin-top: 1.75rem;
+  margin-bottom: 1rem;
+  width: min(94vw, 30rem);
   background: var(--brass);
   color: #14100a;
   border: 0;
@@ -190,119 +300,8 @@
   font-size: 0.85rem;
   letter-spacing: 0.12em;
   min-height: 54px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
 .desk__begin:active {
   transform: translateY(1px);
-}
-
-/* --- Case file screen ----------------------------------------------- */
-
-.cf {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 2rem var(--gutter);
-  padding-top: calc(2rem + var(--safe-top));
-  padding-bottom: calc(2rem + var(--safe-bottom));
-}
-
-.cf__inner {
-  width: 100%;
-  max-width: 32rem;
-  margin: 0 auto;
-}
-
-.cf__number {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  color: var(--brass);
-  margin: 0 0 0.4rem;
-}
-
-.cf__title {
-  font-size: var(--step-2);
-  color: var(--paper);
-  margin: 0 0 1.5rem;
-}
-
-.cf__facts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem 1rem;
-  margin: 0 0 1.75rem;
-  padding: 1rem 0;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-}
-
-.cf__facts dt {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  color: var(--text-dim);
-  margin-bottom: 0.2rem;
-}
-
-.cf__facts dd {
-  margin: 0;
-  color: var(--paper);
-  font-size: 0.95rem;
-}
-
-.cf__briefing {
-  color: var(--text-dim);
-  line-height: 1.65;
-  white-space: pre-line;
-  margin: 0 0 2rem;
-}
-
-.cf__heading {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.13em;
-  color: var(--text-dim);
-  margin: 0 0 0.75rem;
-}
-
-.cf__objectives {
-  list-style: none;
-  margin: 0 0 2.25rem;
-  padding: 0;
-}
-
-.cf__objectives li {
-  position: relative;
-  padding-left: 1.4rem;
-  margin-bottom: 0.6rem;
-  color: var(--text);
-  font-size: 0.92rem;
-}
-
-.cf__objectives li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.55em;
-  width: 6px;
-  height: 6px;
-  border: 1px solid var(--brass);
-  border-radius: 1px;
-}
-
-.cf__open {
-  display: block;
-  width: 100%;
-  background: var(--brass);
-  color: #14100a;
-  border: 0;
-  border-radius: 4px;
-  padding: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.12em;
-  min-height: 54px;
 }
