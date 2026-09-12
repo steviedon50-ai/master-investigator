@@ -1,0 +1,153 @@
+/* Documents. Aged paper against the dark desk. */
+
+.doc {
+  position: relative;
+  background: var(--paper);
+  color: #2e2a22;
+  border-radius: 2px;
+  padding: 1.1rem 1rem 1rem;
+  margin: 0 0 1.25rem;
+  /* Paper sits on a desk, so it casts a real shadow rather than a card's glow. */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 8px 20px rgba(0, 0, 0, 0.35);
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.doc--inline {
+  padding: 0.9rem 0.85rem;
+  font-size: 0.95em;
+}
+
+.doc__close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  background: none;
+  border: 0;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #6b6152;
+  padding: 0.25rem 0.4rem;
+  /* Touch target, not a decorative glyph. */
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.doc__header {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: #6b6152;
+  border-bottom: 1px solid var(--paper-shadow);
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.doc__body {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.75;
+  margin: 0;
+  /* pre-wrap keeps the Morse spacing and the numbered lines, but still wraps
+     on a narrow phone instead of forcing a horizontal scroll. */
+  white-space: pre-wrap;
+  color: #2e2a22;
+}
+
+.doc__footnote {
+  margin-top: 0.85rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--paper-shadow);
+  font-size: 0.72rem;
+  font-style: italic;
+  color: #6b6152;
+}
+
+/* --- Per-document treatments ------------------------------------ */
+
+.doc--telegram .doc__body {
+  letter-spacing: 0.03em;
+}
+
+.doc--typewritten .doc__body {
+  /* Uneven ink weight, the way a struck ribbon prints. */
+  color: #34302a;
+  text-shadow: 0 0 1px rgba(46, 42, 34, 0.28);
+}
+
+.doc--handwritten {
+  background: #ece6d8;
+}
+
+.doc--handwritten .doc__body {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: #2f3a52;
+}
+
+.doc--newsprint {
+  background: #e2ddd0;
+}
+
+.doc--newsprint .doc__header {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  color: #2e2a22;
+  text-align: center;
+}
+
+.doc--newsprint .doc__body {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.doc--notebook {
+  background: #e9e3d2;
+}
+
+.doc--notebook .doc__body {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.85;
+}
+
+.doc--ruled .doc__body {
+  /* Ledger ruling, drawn under the text rather than printed on it. */
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent calc(1.75em - 1px),
+    rgba(70, 90, 120, 0.22) calc(1.75em - 1px),
+    rgba(70, 90, 120, 0.22) 1.75em
+  );
+}
+
+/* Fold marks and age. Decorative only — never carries information. */
+
+.doc--telegram::after,
+.doc--typewritten::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0) 18%,
+    rgba(0, 0, 0, 0) 82%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  border-radius: inherit;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .doc {
+    transition: transform 0.15s ease;
+  }
+}
