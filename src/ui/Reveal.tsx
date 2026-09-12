@@ -1,11 +1,11 @@
 /**
  * The reveal.
  *
- * Timings come from the case data rather than being hard-coded here, so an
- * authored case can choreograph its own ending.
+ * The words accumulate, then clear, then the title lands alone. The moment is
+ * the transformation — four separate findings becoming one name — so the
+ * stacked list must go before the title arrives, not sit above it.
  *
- * Reduced motion is not a lesser path: the same words appear, all at once,
- * with no movement. Nobody misses the moment because of an accessibility setting.
+ * Reduced motion gets the same information with no movement.
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -25,21 +25,14 @@ function prefersReducedMotion(): boolean {
 
 export default function RevealView({ reveal, onContinue }: Props) {
   const reduced = useMemo(prefersReducedMotion, []);
-  const [elapsed, setElapsed] = useState(reduced ? Number.MAX_SAFE_INTEGER : 0);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     if (reduced) return;
-
     const start = Date.now();
-    const id = window.setInterval(() => {
-      setElapsed(Date.now() - start);
-    }, 100);
-
+    const id = window.setInterval(() => setElapsed(Date.now() - start), 80);
     return () => window.clearInterval(id);
   }, [reduced]);
-
-  const finalStep = reveal.sequence[reveal.sequence.length - 1];
-  const done = reduced || elapsed >= (finalStep?.at ?? 0) + 600;
 
   if (reduced) {
     return (
@@ -57,44 +50,61 @@ export default function RevealView({ reveal, onContinue }: Props) {
     );
   }
 
+  const words = reveal.sequence.filter((s) => s.word);
+  const titleStep = reveal.sequence.find((s) => s.title);
+  const closingLines = reveal.sequence.filter((s) => s.text && s.at > 0);
+  const opening = reveal.sequence.find((s) => s.text && s.at === 0);
+
+  const titleAt = titleStep?.at ?? 3600;
+
+  /* Phase 1: words appear one at a time.
+     Phase 2: at titleAt they are gone and the title alone is on screen. */
+  const inTitle = elapsed >= titleAt;
+  const finished = elapsed >= titleAt + 2400;
+
   return (
     <section className="reveal">
-      <div className="reveal__stage">
-        {reveal.sequence.map((step, i) => {
-          if (elapsed < step.at) return null;
+      {!inTitle && (
+        <div className="reveal__stage">
+          {opening && elapsed >= opening.at && (
+            <p className="reveal__opening">{opening.text}</p>
+          )}
+          {words.map(
+            (step, i) =>
+              elapsed >= step.at && (
+                <span key={i} className="reveal__word">
+                  {step.word}
+                </span>
+              ),
+          )}
+        </div>
+      )}
 
-          if (step.word) {
-            return (
-              <span key={i} className="reveal__word">
-                {step.word}
-              </span>
-            );
-          }
+      {inTitle && (
+        <div className="reveal__stage">
+          <h1 className="reveal__title">{titleStep?.title}</h1>
 
-          if (step.title) {
-            return (
-              <h1 key={i} className="reveal__title">
-                {step.title}
-              </h1>
-            );
-          }
+          {closingLines.map(
+            (step, i) =>
+              elapsed >= step.at && (
+                <p key={i} className="reveal__line">
+                  {step.text}
+                </p>
+              ),
+          )}
+        </div>
+      )}
 
-          return (
-            <p key={i} className="reveal__line">
-              {step.text}
-            </p>
-          );
-        })}
-      </div>
-
-      {done && (
+      {finished ? (
         <button type="button" className="reveal__continue" onClick={onContinue}>
           Continue
         </button>
-      )}
-
-      {!done && (
-        <button type="button" className="reveal__skip" onClick={() => setElapsed(Number.MAX_SAFE_INTEGER)}>
+      ) : (
+        <button
+          type="button"
+          className="reveal__skip"
+          onClick={() => setElapsed(titleAt + 2400)}
+        >
           Skip
         </button>
       )}
