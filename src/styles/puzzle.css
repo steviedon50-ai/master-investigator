@@ -261,3 +261,34 @@
   border-color: var(--brass);
   color: var(--paper);
 }
+
+/* Copy button on research steps. Copying keeps the player inside the game —
+   a search link would replace the page in an installed web app. */
+
+.pz__copy {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0 0.65rem;
+  min-height: 48px;
+  min-width: 4.2rem;
+}
+
+.pz__copy:active {
+  border-color: var(--brass);
+  color: var(--paper);
+}
+
+.pz__note {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-dim);
+  border-left: 2px solid var(--rule);
+  padding-left: 0.85rem;
+  margin: 0 0 1.5rem;
+}
