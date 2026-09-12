@@ -64,8 +64,8 @@
 
 .case__body {
   flex: 1;
-  /* Clears the sticky navigation so nothing hides behind it. */
-  padding-bottom: 4.5rem;
+  /* Clears the fixed navigation bar. */
+  padding-bottom: 6rem;
 }
 
 .case__panel {
@@ -230,10 +230,13 @@
 
 /* --- Bottom navigation -------------------------------------------- */
 
-/* Sticky rather than fixed: it stays with the safe-area padding and does
-   not fight the iOS keyboard, but never scrolls out of reach. */
+/* Fixed to the viewport so it is always reachable, however long the
+   page. The body carries matching bottom padding so nothing hides
+   underneath it. */
 .case__nav {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
   z-index: 10;
   display: flex;
