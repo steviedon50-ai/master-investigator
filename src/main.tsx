@@ -11,6 +11,7 @@ import './styles/detail.css';
 import './styles/solved.css';
 import './styles/contradiction.css';
 import './styles/title.css';
+import './styles/results.css';
 const rootEl = document.getElementById('root');
 
 if (!rootEl) {
