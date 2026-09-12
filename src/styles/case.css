@@ -64,8 +64,8 @@
 
 .case__body {
   flex: 1;
-  overflow-y: auto;
-  padding-bottom: 1rem;
+  /* Clears the sticky navigation so nothing hides behind it. */
+  padding-bottom: 4.5rem;
 }
 
 .case__panel {
@@ -230,7 +230,12 @@
 
 /* --- Bottom navigation -------------------------------------------- */
 
+/* Sticky rather than fixed: it stays with the safe-area padding and does
+   not fight the iOS keyboard, but never scrolls out of reach. */
 .case__nav {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
   display: flex;
   border-top: 1px solid var(--rule);
   background: var(--charcoal);
