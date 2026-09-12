@@ -1,8 +1,8 @@
 /**
  * The game.
  *
- * Four states before the investigation proper: title, case file, then play,
- * then the reveal. A returning player skips straight back to where they were.
+ * Title, case file, play, reveal, results. A returning player skips straight
+ * back to where they were; a finished player lands on their score.
  */
 
 import { useState } from 'react';
@@ -11,23 +11,28 @@ import { useCase } from './state/useCase';
 import CaseView from './ui/Case';
 import CaseFileView from './ui/CaseFile';
 import PuzzleView from './ui/Puzzle';
+import Results from './ui/Results';
 import RevealView from './ui/Reveal';
 import Solved from './ui/Solved';
 import Title from './ui/Title';
 import type { Puzzle } from './engine/types';
 
-type Screen = 'title' | 'casefile' | 'playing' | 'reveal';
+type Screen = 'title' | 'casefile' | 'playing' | 'reveal' | 'results';
+
+function textOf(value: { fallback: string } | string): string {
+  return typeof value === 'string' ? value : value.fallback;
+}
 
 export default function App() {
   const game = useCase(case000);
 
-  // Anything already inspected or solved means this is not a first visit,
-  // so the opening screens are skipped rather than shown again.
   const returning =
     game.progress.inspectedEvidence.length > 0 ||
     Object.keys(game.progress.puzzles).length > 0;
 
-  const [screen, setScreen] = useState<Screen>(returning ? 'playing' : 'title');
+  const [screen, setScreen] = useState<Screen>(
+    game.complete ? 'results' : returning ? 'playing' : 'title',
+  );
   const [justSolved, setJustSolved] = useState<Puzzle | null>(null);
 
   if (screen === 'title') {
@@ -53,7 +58,17 @@ export default function App() {
 
   if (screen === 'reveal' && case000.reveal) {
     return (
-      <RevealView reveal={case000.reveal} onContinue={() => setScreen('playing')} />
+      <RevealView reveal={case000.reveal} onContinue={() => setScreen('results')} />
+    );
+  }
+
+  if (screen === 'results') {
+    return (
+      <Results
+        score={game.score}
+        caseTitle={textOf(case000.caseFile.title)}
+        onRestart={game.restart}
+      />
     );
   }
 
@@ -105,11 +120,12 @@ export default function App() {
       ) : (
         <section className="pz">
           <h2 className="pz__title">Case closed</h2>
-          <p className="pz__description">
-            {game.score.rank} · {game.score.total} out of 100
-          </p>
-          <button type="button" className="pz__submit" onClick={game.restart}>
-            Start again
+          <button
+            type="button"
+            className="pz__submit"
+            onClick={() => setScreen('results')}
+          >
+            See your results
           </button>
         </section>
       )}
