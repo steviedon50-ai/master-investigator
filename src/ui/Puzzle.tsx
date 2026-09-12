@@ -51,11 +51,6 @@ const HINT_LABELS: Record<HintLevel, string> = {
   reveal: 'Reveal the answer',
 };
 
-/** Opens a search in a new tab. Leaving the game is safe — progress persists. */
-function searchUrl(query: string): string {
-  return `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
-}
-
 export default function PuzzleView({
   puzzle,
   stageCount,
@@ -72,11 +67,13 @@ export default function PuzzleView({
   const [answer, setAnswer] = useState('');
   const [hintsOpen, setHintsOpen] = useState(false);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState<string | null>(null);
 
   useEffect(() => {
     setAnswer('');
     setError('');
     setHintsOpen(false);
+    setCopied(null);
   }, [puzzle.id]);
 
   const steps = (puzzle.data.steps as ResearchStep[] | undefined) ?? [];
@@ -86,6 +83,20 @@ export default function PuzzleView({
 
   const ciphertext =
     typeof puzzle.data.ciphertext === 'string' ? puzzle.data.ciphertext : null;
+
+  /**
+   * Copy rather than a search link: opening a search replaces the page in an
+   * installed web app, which throws the player out of the game.
+   */
+  const copyPrompt = async (step: ResearchStep): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(step.prompt);
+      setCopied(step.id);
+      window.setTimeout(() => setCopied(null), 2000);
+    } catch {
+      // Clipboard blocked. Nothing useful to offer, so say nothing.
+    }
+  };
 
   const handleSubmit = (): void => {
     if (!isInspection && answer.trim().length === 0) {
@@ -123,6 +134,10 @@ export default function PuzzleView({
 
       {isResearch && (
         <div className="pz__steps">
+          <p className="pz__note">
+            Copy a clue to look it up elsewhere, then come back. Your progress is saved.
+          </p>
+
           {steps.map((step, index) => {
             const given = stepAnswers[step.id] ?? '';
             const done = given.length > 0 && validateResearchStep(puzzle, step.id, given);
@@ -143,15 +158,14 @@ export default function PuzzleView({
                     placeholder="Name"
                     onChange={(e) => onAnswerStep(step.id, e.target.value)}
                   />
-                  <a
-                    className="pz__search"
-                    href={searchUrl(step.prompt)}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    aria-label={`Search for: ${step.prompt}`}
+                  <button
+                    type="button"
+                    className="pz__copy"
+                    onClick={() => void copyPrompt(step)}
+                    aria-label={`Copy clue: ${step.prompt}`}
                   >
-                    Search
-                  </a>
+                    {copied === step.id ? 'Copied' : 'Copy'}
+                  </button>
                   <span className={`pz__step-mark${done ? ' pz__step-mark--done' : ''}`}>
                     {done ? '✓' : '—'}
                   </span>
