@@ -271,3 +271,80 @@
     margin: 0 auto;
   }
 }
+
+/* --- More tab ------------------------------------------------------ */
+
+.more__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  margin: 0 var(--gutter) 2rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.more__facts dt {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+
+.more__facts dd {
+  margin: 0;
+  color: var(--paper);
+  font-size: 0.95rem;
+}
+
+.more__restart {
+  display: block;
+  width: calc(100% - (2 * var(--gutter)));
+  margin: 0 var(--gutter);
+  background: none;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--text);
+  padding: 0.85rem;
+  font-size: 0.9rem;
+  min-height: 52px;
+}
+
+.more__confirm {
+  margin: 0 var(--gutter);
+}
+
+/* Destructive actions state their consequence before they are offered. */
+.more__warning {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  border-left: 2px solid #a8453c;
+  padding-left: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.more__danger {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 1px solid #a8453c;
+  border-radius: 4px;
+  color: #e2726a;
+  padding: 0.85rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.6rem;
+  min-height: 52px;
+}
+
+.more__cancel {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  padding: 0.75rem;
+  font-size: 0.88rem;
+  min-height: 48px;
+}
