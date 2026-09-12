@@ -69,6 +69,7 @@ export default function App() {
       onInspect={game.inspect}
       onAddNote={game.addNote}
       onDeleteNote={game.deleteNote}
+      onRestart={game.restart}
     >
       {justSolved ? (
         <Solved
