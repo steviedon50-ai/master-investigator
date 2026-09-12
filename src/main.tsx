@@ -5,7 +5,7 @@ import './styles/base.css';
 import './styles/boot.css';
 import './styles/document.css';
 import './styles/puzzle.css';
-
+import './styles/case.css';
 
 
 const rootEl = document.getElementById('root');
