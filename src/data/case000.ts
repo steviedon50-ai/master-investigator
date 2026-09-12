@@ -211,3 +211,368 @@ export const documents: InvestigationDocument[] = [
     hiddenClue: null,
   },
 ];
+export const puzzles: Puzzle[] = [
+  {
+    id: 'pz-inspect',
+    type: 'inspection',
+    stage: 1,
+    difficulty: 'apprentice',
+    title: 'Open the dossier',
+    description:
+      'Every investigation starts the same way: look at what you actually have. ' +
+      'Go to Evidence and open all four items, then come back here.',
+    data: {
+      requiresInspected: ['ev-telegram', 'ev-statement', 'ev-cutting', 'ev-watch'],
+    },
+    solution: null,
+    acceptedAnswers: [],
+    dependencies: [],
+    unlockConditions: [],
+    researchRequired: false,
+    teaches: ['case-file', 'evidence-list', 'document-viewer'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'Four items are open to you now. Tap each one and read it.',
+      },
+    ],
+    explanation:
+      'Every clue in this case is inside a document. The puzzle will tell you what is odd. ' +
+      'It will not tell you what to do about it — that is what the hints are for, and they cost you.',
+    rewards: { log: 'Dossier opened' },
+    nextPuzzles: ['pz-morse'],
+  },
+  {
+    id: 'pz-morse',
+    type: 'cipher.morse',
+    stage: 2,
+    difficulty: 'apprentice',
+    title: 'The marks below the message',
+    description:
+      'The telegram refuses to write a name, then prints three groups of marks below the ' +
+      'message. Enter the word they spell.',
+    data: { documentId: 'doc-telegram', alphabet: 'international-morse' },
+    solution: 'THE',
+    acceptedAnswers: ['the'],
+    dependencies: ['pz-inspect'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-inspect' }],
+    researchRequired: false,
+    teaches: ['cipher', 'answer-submission', 'hints'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'Dots and dashes, sent by telegraph. The clue is the medium.',
+      },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'Morse code. Three groups means three letters. A single dash is one of the commonest letters in English.',
+      },
+      { level: 'strong', penalty: 20, text: 'Dash is T. Four dots is H. A single dot is E.' },
+      { level: 'reveal', penalty: 40, text: 'The word is THE.' },
+    ],
+    explanation:
+      'The medium carried the clue: marks on a telegram are Morse. Ask what a document is ' +
+      'before you ask what it says — a ledger, a map and a telegram each hide things differently.',
+    rewards: {
+      evidence: ['ev-register'],
+      fragment: { slot: 1, word: 'THE' },
+      log: 'First word recovered',
+    },
+    nextPuzzles: ['pz-acrostic'],
+  },
+  {
+    id: 'pz-acrostic',
+    type: 'language.acrostic',
+    stage: 3,
+    difficulty: 'apprentice',
+    title: 'What the porter did not say',
+    description:
+      'The porter gave six numbered lines and said almost nothing in them. ' +
+      'The statement was not written for its content.',
+    data: { documentId: 'doc-statement', extraction: 'first-letter-per-line', lines: 6 },
+    solution: 'MASTER',
+    acceptedAnswers: ['master'],
+    dependencies: ['pz-morse'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-morse' }],
+    researchRequired: false,
+    teaches: ['document-inspection', 'hidden-clue', 'notes'],
+    hints: [
+      { level: 'direction', penalty: 5, text: 'Six lines, six letters. Read down, not across.' },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'An acrostic: take the first letter of each line in order.',
+      },
+      { level: 'strong', penalty: 20, text: 'M, A, S, T, E, R.' },
+      { level: 'reveal', penalty: 40, text: 'The word is MASTER.' },
+    ],
+    explanation:
+      'Suspect the format before the content. A statement that is oddly numbered, oddly ' +
+      'short and says nothing useful was built to carry something other than its meaning.',
+    rewards: {
+      evidence: ['ev-ledger'],
+      fragment: { slot: 2, word: 'MASTER' },
+      log: 'Second word recovered',
+    },
+    nextPuzzles: ['pz-contradiction'],
+  },
+  {
+    id: 'pz-contradiction',
+    type: 'deduction.contradiction',
+    stage: 4,
+    difficulty: 'apprentice',
+    title: 'Two nights that cannot both be true',
+    description:
+      'Your sources give different dates for the break-in. Until you know which of them ' +
+      'to trust, nothing else you find can be relied on. Name the unreliable source and ' +
+      'say what is wrong with it.',
+    data: {
+      selectFrom: ['ev-telegram', 'ev-statement', 'ev-cutting', 'ev-ledger', 'ev-watch'],
+      reasonOptions: [
+        { id: 'year', label: 'It gives the wrong year' },
+        { id: 'forged', label: 'It is a forgery' },
+        { id: 'witness', label: 'The witness is lying' },
+        { id: 'irrelevant', label: 'It has nothing to do with the case' },
+      ],
+      redHerring: { evidenceId: 'ev-watch', reasonKey: 'irrelevant' },
+    },
+    solution: 'ev-cutting|year',
+    acceptedAnswers: [],
+    dependencies: ['pz-acrostic'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-acrostic' }],
+    researchRequired: false,
+    teaches: ['contradiction', 'red-herring', 'evidence-status', 'evidence-connection'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'Line up the dates alone and ignore everything else on each item.',
+      },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'The telegram was franked 1873. The ledger records 1873. One source says 1874.',
+      },
+      {
+        level: 'strong',
+        penalty: 20,
+        text: 'The newspaper cutting is a year out. It is undated and has no byline.',
+      },
+      {
+        level: 'reveal',
+        penalty: 40,
+        text: 'The newspaper cutting is the unreliable source, because the year is wrong.',
+      },
+    ],
+    explanation:
+      'Print is not proof. The cutting had no byline and no date, and it disagreed with two ' +
+      'records made at the time. The watch is a separate trap: physical, plausible, and connected ' +
+      'to nothing. Mark bad evidence rather than discarding it — being wrong is a fact about a source.',
+    rewards: {
+      setStatus: [
+        { evidenceId: 'ev-cutting', status: 'contradicted' },
+        { evidenceId: 'ev-watch', status: 'red-herring' },
+        { evidenceId: 'ev-telegram', status: 'confirmed' },
+        { evidenceId: 'ev-ledger', status: 'confirmed' },
+      ],
+      log: 'Contradiction identified',
+    },
+    nextPuzzles: ['pz-anagram'],
+  },
+  {
+    id: 'pz-anagram',
+    type: 'language.anagram',
+    stage: 5,
+    difficulty: 'apprentice',
+    title: 'The guest with no address',
+    description:
+      'One entry in the hotel register is not a guest. Rearrange its twelve letters ' +
+      'into a single word.',
+    data: { documentId: 'doc-register' },
+    solution: 'INVESTIGATOR',
+    acceptedAnswers: ['investigator'],
+    dependencies: ['pz-contradiction'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-contradiction' }],
+    researchRequired: false,
+    teaches: ['wordplay', 'evidence-connection'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'It is not a name and not a lie. It is the same word, disturbed.',
+      },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'An anagram of all twelve letters. The word describes what you are doing right now.',
+      },
+      { level: 'strong', penalty: 20, text: 'It begins with I and ends with R.' },
+      { level: 'reveal', penalty: 40, text: 'The word is INVESTIGATOR.' },
+    ],
+    explanation:
+      'The ordinary entries made the odd one visible. A planted clue needs normal neighbours ' +
+      'to stand out against — and so does a red herring. Watch for the thing that breaks a pattern.',
+    rewards: {
+      evidence: ['ev-notebook'],
+      fragment: { slot: 3, word: 'INVESTIGATOR' },
+      log: 'Third word recovered',
+    },
+    nextPuzzles: ['pz-research'],
+  },
+  {
+    id: 'pz-research',
+    type: 'research.chain',
+    stage: 6,
+    difficulty: 'apprentice',
+    title: 'Four people, no names',
+    description:
+      'The notebook describes four people by what they did. Name each one, then read the ' +
+      'initials in order.',
+    data: {
+      documentId: 'doc-notebook',
+      combine: 'initials-in-order',
+      steps: [
+        {
+          id: 'r1',
+          prompt: 'Astronomer, tried 1633',
+          solution: 'GALILEO',
+          acceptedAnswers: ['galileo', 'galileo galilei', 'galilei'],
+          initial: 'G',
+        },
+        {
+          id: 'r2',
+          prompt: 'Norwegian, South Pole 1911',
+          solution: 'AMUNDSEN',
+          acceptedAnswers: ['amundsen', 'roald amundsen'],
+          initial: 'A',
+        },
+        {
+          id: 'r3',
+          prompt: 'Flemish cartographer, 1569 projection',
+          solution: 'MERCATOR',
+          acceptedAnswers: ['mercator', 'gerardus mercator', 'gerard mercator', 'gerhard mercator'],
+          initial: 'M',
+        },
+        {
+          id: 'r4',
+          prompt: 'Physicist, special relativity 1905',
+          solution: 'EINSTEIN',
+          acceptedAnswers: ['einstein', 'albert einstein'],
+          initial: 'E',
+        },
+      ],
+    },
+    solution: 'GAME',
+    acceptedAnswers: ['game'],
+    dependencies: ['pz-anagram'],
+    unlockConditions: [{ type: 'puzzleSolved', id: 'pz-anagram' }],
+    researchRequired: true,
+    teaches: ['internal-research', 'external-research', 'answer-variants'],
+    hints: [
+      {
+        level: 'direction',
+        penalty: 5,
+        text: 'All four are well documented. Look them up however you like.',
+      },
+      {
+        level: 'technique',
+        penalty: 10,
+        text: 'Answer all four, then read the first letters downward. Four letters, one word.',
+      },
+      { level: 'strong', penalty: 20, text: 'G, A, M, E.' },
+      { level: 'reveal', penalty: 40, text: 'The word is GAME.' },
+    ],
+    explanation:
+      'Looking things up is part of the work, not cheating. Answers accept alternate spellings, ' +
+      'full names and surnames alone — you are being tested on finding the right person, not on typing.',
+    rewards: {
+      fragment: { slot: 4, word: 'GAME' },
+      log: 'Fourth word recovered',
+    },
+    nextPuzzles: ['pz-meta'],
+  },
+  {
+    id: 'pz-meta',
+    type: 'meta.assembly',
+    stage: 7,
+    difficulty: 'apprentice',
+    title: 'The name of this investigation',
+    description:
+      'Four words, recovered four different ways, from four different documents. ' +
+      'They are not in the order you found them. Put them in the order that reads.',
+    data: {
+      fragments: [
+        { slot: 1, word: 'THE', from: 'pz-morse' },
+        { slot: 2, word: 'MASTER', from: 'pz-acrostic' },
+        { slot: 3, word: 'INVESTIGATOR', from: 'pz-anagram' },
+        { slot: 4, word: 'GAME', from: 'pz-research' },
+      ],
+      shuffleForPlayer: true,
+      shuffleSeed: 'case000-meta',
+    },
+    solution: 'THE MASTER INVESTIGATOR GAME',
+    acceptedAnswers: [
+      'the master investigator game',
+      'themasterinvestigatorgame',
+      'the-master-investigator-game',
+    ],
+    dependencies: ['pz-research'],
+    unlockConditions: [{ type: 'allFragments', count: 4 }],
+    researchRequired: false,
+    teaches: ['meta-puzzle', 'final-submission', 'scoring'],
+    hints: [
+      { level: 'direction', penalty: 5, text: 'One of the four words is an article. Articles go first.' },
+      { level: 'technique', penalty: 10, text: 'Two of the words describe you. One describes what this is.' },
+      { level: 'strong', penalty: 20, text: 'THE ... ... GAME.' },
+      { level: 'reveal', penalty: 40, text: 'THE MASTER INVESTIGATOR GAME.' },
+    ],
+    explanation:
+      'A meta-puzzle takes what the earlier stages produced and makes one answer out of it. ' +
+      'In a real case those pieces are a date, a key, a person and a place. Here they were the ' +
+      'name you were never told.',
+    rewards: { log: 'Final answer submitted', unlocks: ['main-menu', 'case-001'] },
+    nextPuzzles: [],
+  },
+];
+
+export const reveal: Reveal = {
+  sequence: [
+    { at: 0, text: 'IDENTITY VERIFIED' },
+    { at: 900, word: 'THE' },
+    { at: 1500, word: 'MASTER' },
+    { at: 2100, word: 'INVESTIGATOR' },
+    { at: 2700, word: 'GAME' },
+    { at: 3600, title: 'THE MASTER INVESTIGATOR GAME' },
+    { at: 4400, text: 'Advanced Code-Breaking, Research & Deduction' },
+    { at: 5200, text: 'You have solved your first investigation. Your real cases are now available.' },
+  ],
+  reducedMotionFallback: {
+    title: 'THE MASTER INVESTIGATOR GAME',
+    lines: [
+      'Identity verified.',
+      'You have solved your first investigation. Your real cases are now available.',
+    ],
+  },
+  unlocks: { titleDiscovered: true, mainMenu: true, nextCaseNumber: 1 },
+};
+
+export const graph: CaseGraph = {
+  entry: 'pz-inspect',
+  nodes: puzzles.map((p) => ({ id: p.id, stage: p.stage, next: p.nextPuzzles })),
+  linear: true,
+};
+
+export const case000: Investigation = {
+  caseFile,
+  evidence,
+  documents,
+  puzzles,
+  graph,
+  reveal,
+  meta: { authored: true, generatorVersion: AUTHORED_VERSION },
+};
+
+export default case000;
