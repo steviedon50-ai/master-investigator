@@ -9,6 +9,7 @@ import './styles/case.css';
 import './styles/reveal.css';
 import './styles/detail.css';
 import './styles/solved.css';
+import './styles/contradiction.css';
 const rootEl = document.getElementById('root');
 
 if (!rootEl) {
