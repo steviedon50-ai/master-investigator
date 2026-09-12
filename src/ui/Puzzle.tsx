@@ -2,14 +2,20 @@
  * Puzzle screen.
  *
  * One puzzle fills the screen. Whatever the puzzle depends on — a document,
- * or a bare piece of ciphertext — is shown directly above the input, so nobody
- * has to hold it in their head while navigating elsewhere to type.
+ * or a bare piece of ciphertext — is shown directly above the input.
+ * Puzzles that need a choice rather than a typed answer get their own control.
  */
 
 import { useEffect, useState } from 'react';
-import type { HintLevel, InvestigationDocument, Puzzle } from '../engine/types';
+import type {
+  Evidence,
+  HintLevel,
+  InvestigationDocument,
+  Puzzle,
+} from '../engine/types';
 import { validateResearchStep } from '../engine/puzzles';
 import DocumentView from './Document';
+import Contradiction from './Contradiction';
 
 interface ResearchStep {
   id: string;
@@ -19,10 +25,16 @@ interface ResearchStep {
   initial: string;
 }
 
+interface ReasonOption {
+  id: string;
+  label: string;
+}
+
 interface Props {
   puzzle: Puzzle;
   stageCount: number;
   document: InvestigationDocument | null;
+  evidence: Evidence[];
   hintsUsed: HintLevel[];
   stepAnswers: Record<string, string>;
   outcome: { correct: boolean; approximate: boolean; feedback?: string } | null;
@@ -43,6 +55,7 @@ export default function PuzzleView({
   puzzle,
   stageCount,
   document,
+  evidence,
   hintsUsed,
   stepAnswers,
   outcome,
@@ -64,10 +77,10 @@ export default function PuzzleView({
   const steps = (puzzle.data.steps as ResearchStep[] | undefined) ?? [];
   const isResearch = puzzle.type === 'research.chain';
   const isInspection = puzzle.type === 'inspection';
+  const isContradiction = puzzle.type === 'deduction.contradiction';
 
   const ciphertext =
     typeof puzzle.data.ciphertext === 'string' ? puzzle.data.ciphertext : null;
-  const source = typeof puzzle.data.source === 'string' ? puzzle.data.source : null;
 
   const handleSubmit = (): void => {
     if (!isInspection && answer.trim().length === 0) {
@@ -93,8 +106,14 @@ export default function PuzzleView({
 
       {!document && ciphertext && <p className="pz__cipher">{ciphertext}</p>}
 
-      {!document && !ciphertext && source && (
-        <p className="pz__cipher pz__cipher--letters">{source}</p>
+      {isContradiction && (
+        <Contradiction
+          evidence={evidence}
+          selectFrom={(puzzle.data.selectFrom as string[] | undefined) ?? []}
+          reasonOptions={(puzzle.data.reasonOptions as ReasonOption[] | undefined) ?? []}
+          onSubmit={onSubmit}
+          feedback={outcome && !outcome.correct ? outcome.feedback : undefined}
+        />
       )}
 
       {isResearch && (
@@ -129,7 +148,7 @@ export default function PuzzleView({
         </div>
       )}
 
-      {!isInspection && (
+      {!isInspection && !isContradiction && (
         <div className="pz__answer">
           <label className="pz__label" htmlFor="answer">
             {isResearch ? 'The four initials spell' : 'Your answer'}
@@ -156,11 +175,13 @@ export default function PuzzleView({
         </div>
       )}
 
-      <button type="button" className="pz__submit" onClick={handleSubmit}>
-        {isInspection ? 'I have examined everything' : 'Check answer'}
-      </button>
+      {!isContradiction && (
+        <button type="button" className="pz__submit" onClick={handleSubmit}>
+          {isInspection ? 'I have examined everything' : 'Check answer'}
+        </button>
+      )}
 
-      {outcome && !outcome.correct && (
+      {!isContradiction && outcome && !outcome.correct && (
         <p className="pz__feedback" role="status">
           {outcome.feedback ?? 'Not that. Look again.'}
         </p>
