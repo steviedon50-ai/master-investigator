@@ -50,6 +50,7 @@ export default function App() {
           puzzle={puzzle}
           stageCount={case000.puzzles.length}
           document={game.documentFor(puzzle.data.documentId as string | undefined)}
+          evidence={game.evidence}
           hintsUsed={game.hintsUsedFor(puzzle.id)}
           stepAnswers={game.progress.puzzles[puzzle.id]?.stepAnswers ?? {}}
           outcome={game.lastOutcome}
