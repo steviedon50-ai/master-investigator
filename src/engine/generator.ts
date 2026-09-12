@@ -2,14 +2,15 @@
  * Case generator.
  *
  * Seed in, playable investigation out. Every choice comes from the seeded RNG,
- * so the same player always gets the same Case 014 — reproducible, never
- * regenerated on reload.
+ * so the same player always gets the same Case 014.
  *
- * The output is the same Investigation shape as the authored Case 000, so the
- * UI and the validator cannot tell the difference.
+ * Two things separate a generated case from a puzzle chain: a contradiction
+ * the player has to resolve, and a red herring they have to ignore. Both are
+ * planted here rather than added later, because the documents have to be built
+ * around them — a false date has to be false about something.
  */
 
-import { acceptedFor, entitiesOfKind, entity, type Entity } from '../data/knowledge';
+import { acceptedFor, entitiesOfKind, type Entity } from '../data/knowledge';
 import { rngForCase, type Rng } from './rng';
 import type {
   CaseSeedParts,
@@ -20,10 +21,6 @@ import type {
   Puzzle,
 } from './types';
 
-/* ---------------------------------------------------------------- */
-/* Story dressing                                                    */
-/* ---------------------------------------------------------------- */
-
 const CASE_TITLES = [
   'The Missing Archive',
   'The Silent Cartographer',
@@ -33,6 +30,14 @@ const CASE_TITLES = [
   'The Second Ledger',
   'The Quiet Hour',
   'The Wrong Address',
+  'The Long Walk Back',
+  'The Unposted Letter',
+  'The Fourth Witness',
+  'The Empty Case',
+  'The Night Register',
+  'The Corrected Entry',
+  'The Absent Clerk',
+  'The Broken Seal',
 ];
 
 const SUBJECTS = [
@@ -41,15 +46,19 @@ const SUBJECTS = [
   'a records office',
   'a university library',
   'a shipping agent\u2019s office',
+  'a solicitor\u2019s strongroom',
+  'a museum store',
 ];
 
-const STAGE_COUNT: Record<Difficulty, number> = {
-  apprentice: 4,
-  investigator: 5,
-  expert: 7,
-  master: 9,
-  black: 12,
-};
+/* Objects that could plausibly be found and mean nothing. */
+const HERRINGS = [
+  { name: 'Pocket watch, stopped', summary: 'Found in the yard. Engraved with two initials.' },
+  { name: 'Single glove', summary: 'Left on the step. No pair found.' },
+  { name: 'Railway ticket, unused', summary: 'Dated the week before. Never punched.' },
+  { name: 'Brass key, unmarked', summary: 'Fits nothing in the building.' },
+  { name: 'Torn photograph', summary: 'A doorway. Nobody in frame.' },
+  { name: 'Empty envelope', summary: 'Addressed, sealed, never posted.' },
+];
 
 const PAR_SECONDS: Record<Difficulty, number> = {
   apprentice: 600,
@@ -58,10 +67,6 @@ const PAR_SECONDS: Record<Difficulty, number> = {
   master: 2400,
   black: 4200,
 };
-
-/* ---------------------------------------------------------------- */
-/* Morse, for the cipher stage                                       */
-/* ---------------------------------------------------------------- */
 
 const MORSE: Record<string, string> = {
   A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.',
@@ -79,32 +84,6 @@ function toMorse(word: string): string {
     .join('   ');
 }
 
-/* ---------------------------------------------------------------- */
-/* Document builders                                                 */
-/* ---------------------------------------------------------------- */
-
-function telegramWith(rng: Rng, ciphered: string, year: number): InvestigationDocument {
-  const hour = rng.int(7, 11);
-  const minute = rng.int(10, 55);
-  return {
-    id: 'doc-telegram',
-    style: 'telegram',
-    header: `POST OFFICE TELEGRAPHS — HANDED IN ${rng.int(2, 27)} MAR ${year}, ${hour}.${minute} P.M.`,
-    body:
-      'ROOM SECURE. NOTHING MOVED. I WILL NOT WRITE IT PLAINLY.\n' +
-      'IT IS BELOW.\n\n' +
-      `   ${toMorse(ciphered)}`,
-    footnote: 'No reply paid.',
-    marks: ['fold', 'stamp'],
-    hiddenClue: 'morse',
-  };
-}
-
-/**
- * An acrostic statement. The lines are assembled from fragments chosen so that
- * each begins with the required letter — the sentence has to read naturally or
- * the trick is obvious.
- */
 const LINE_STARTS: Record<string, string[]> = {
   A: ['About that hour the bell rang.', 'A light showed at the stair.'],
   B: ['Before ten the yard was empty.', 'Both doors were bolted.'],
@@ -136,10 +115,8 @@ const LINE_STARTS: Record<string, string[]> = {
 
 function acrosticFor(rng: Rng, word: string): InvestigationDocument | null {
   const lines: string[] = [];
-
   for (const letter of word.toUpperCase().split('')) {
     const options = LINE_STARTS[letter];
-    // No line available for this letter: the word cannot be hidden this way.
     if (!options || options.length === 0) return null;
     lines.push(rng.pick(options));
   }
@@ -155,37 +132,22 @@ function acrosticFor(rng: Rng, word: string): InvestigationDocument | null {
   };
 }
 
-/* ---------------------------------------------------------------- */
-/* Generation                                                        */
-/* ---------------------------------------------------------------- */
-
 export interface GeneratedCase extends Investigation {
-  meta: {
-    authored: false;
-    generatorVersion: string;
-    seed: string;
-  };
+  meta: { authored: false; generatorVersion: string; seed: string };
 }
 
-export const GENERATOR_VERSION = 'gen-v1';
+export const GENERATOR_VERSION = 'gen-v2';
 
-/**
- * Builds one case. Deterministic for a given seed.
- *
- * Returns null when a valid case cannot be assembled from the available
- * knowledge — the caller regenerates with a different attempt number rather
- * than shipping something broken.
- */
 export function generateCase(
   parts: CaseSeedParts,
   attempt = 0,
 ): GeneratedCase | null {
-  const rng = rngForCase({ ...parts, generatorVersion: `${parts.generatorVersion}-${attempt}` });
+  const rng = rngForCase({
+    ...parts,
+    generatorVersion: `${parts.generatorVersion}-${attempt}`,
+  });
 
   const difficulty = parts.difficulty;
-  const stages = STAGE_COUNT[difficulty];
-
-  /* --- Choose the cast ------------------------------------------ */
 
   const people = entitiesOfKind('person');
   const places = entitiesOfKind('place');
@@ -193,248 +155,57 @@ export function generateCase(
 
   const researchSubjects = rng.sample(people, 4);
   const setting = rng.pick(places);
-  const year = setting.year ?? rng.int(1840, 1910);
 
-  /* --- The hidden word, carried by the cipher -------------------- */
+  /* --- Dates ------------------------------------------------------ */
 
-  // The cipher word is the setting's name: short, and it feeds the next stage.
+  /*
+   * The contradiction is built from dates. Two records made at the time agree;
+   * one later account is wrong. The error is deliberately small — a year out,
+   * or a day — because a wildly wrong date is spotted without thinking.
+   */
+  const trueYear = rng.int(1868, 1912);
+  const trueDay = rng.int(3, 26);
+  const month = rng.pick(['JAN', 'FEB', 'MAR', 'APR', 'SEP', 'OCT', 'NOV']);
+
+  const errorKind = rng.pick(['year', 'day'] as const);
+  const falseYear = errorKind === 'year' ? trueYear + rng.pick([-1, 1]) : trueYear;
+  const falseDay = errorKind === 'day' ? trueDay + rng.pick([-2, -1, 1, 2]) : trueDay;
+
+  /* --- Hidden words ----------------------------------------------- */
+
   const cipherWord = setting.name.toUpperCase().replace(/[^A-Z]/g, '');
   if (cipherWord.length < 3 || cipherWord.length > 9) return null;
-
-  /* --- The acrostic word ----------------------------------------- */
 
   const keyPerson = rng.pick(researchSubjects);
   const acrosticWord = keyPerson.name.toUpperCase().replace(/[^A-Z]/g, '');
   const statement = acrosticFor(rng, acrosticWord);
   if (!statement) return null;
 
-  /* --- Documents -------------------------------------------------- */
+  /* --- Documents --------------------------------------------------- */
 
-  const telegram = telegramWith(rng, cipherWord, year);
-
-  const notebook: InvestigationDocument = {
-    id: 'doc-notebook',
-    style: 'notebook',
-    header: 'LOOSE PAGE, NO HEADING',
+  const telegram: InvestigationDocument = {
+    id: 'doc-telegram',
+    style: 'telegram',
+    header: `POST OFFICE TELEGRAPHS — HANDED IN ${trueDay} ${month} ${trueYear}, ${rng.int(7, 11)}.${rng.int(10, 55)} P.M.`,
     body:
-      'Four people. I have written what they did, not what they were called.\n\n' +
-      researchSubjects
-        .map((p, i) => `${['i', 'ii', 'iii', 'iv'][i]}. ${p.clue}`)
-        .join('\n'),
-    footnote: 'The page is torn along one edge.',
-    marks: ['pencil'],
-    hiddenClue: 'research',
+      'ROOM SECURE. NOTHING MOVED. I WILL NOT WRITE IT PLAINLY.\n' +
+      'IT IS BELOW.\n\n' +
+      `   ${toMorse(cipherWord)}`,
+    footnote: 'No reply paid.',
+    marks: ['fold', 'stamp'],
+    hiddenClue: 'morse',
   };
 
-  const documents: InvestigationDocument[] = [telegram, statement, notebook];
-
-  /* --- Evidence ---------------------------------------------------- */
-
-  const evidence: Evidence[] = [
-    {
-      id: 'ev-telegram',
-      kind: 'document',
-      documentId: 'doc-telegram',
-      name: 'Telegram, Post Office form',
-      summary: `Franked ${year}. Marks below the message line.`,
-      revealedBy: null,
-      status: 'unresolved',
-      tags: ['date', 'cipher'],
-    },
-    {
-      id: 'ev-statement',
-      kind: 'document',
-      documentId: 'doc-statement',
-      name: 'Witness statement — night porter',
-      summary: `${acrosticWord.length} numbered lines, signed but not dated.`,
-      revealedBy: null,
-      status: 'unresolved',
-      tags: ['witness', 'document'],
-    },
-    {
-      id: 'ev-notebook',
-      kind: 'document',
-      documentId: 'doc-notebook',
-      name: 'Notebook page, four clues',
-      summary: 'Four descriptions of people, no names given.',
-      revealedBy: 'gen-cipher',
-      status: 'unresolved',
-      tags: ['research'],
-    },
-  ];
-
-  /* --- Puzzles ------------------------------------------------------ */
-
-  const puzzles: Puzzle[] = [
-    {
-      id: 'gen-inspect',
-      type: 'inspection',
-      stage: 1,
-      difficulty,
-      title: 'Open the dossier',
-      description: 'Look at what you have before you look for what is missing.',
-      data: { requiresInspected: ['ev-telegram', 'ev-statement'] },
-      solution: null,
-      acceptedAnswers: [],
-      dependencies: [],
-      unlockConditions: [],
-      researchRequired: false,
-      hints: [
-        { level: 'direction', penalty: 5, text: 'Open each item in Evidence and read it.' },
-      ],
-      explanation: 'The clues are in the documents, not in the puzzle text.',
-      rewards: { log: 'Dossier opened' },
-      nextPuzzles: ['gen-cipher'],
-    },
-    {
-      id: 'gen-cipher',
-      type: 'cipher.morse',
-      stage: 2,
-      difficulty,
-      title: 'The marks below the message',
-      description:
-        'The telegram will not write it plainly, then prints it in marks. ' +
-        'Enter the word they spell.',
-      data: { documentId: 'doc-telegram', alphabet: 'international-morse' },
-      solution: cipherWord,
-      acceptedAnswers: acceptedFor(setting),
-      dependencies: ['gen-inspect'],
-      unlockConditions: [{ type: 'puzzleSolved', id: 'gen-inspect' }],
-      researchRequired: false,
-      hints: [
-        { level: 'direction', penalty: 5, text: 'Dots and dashes, sent by telegraph.' },
-        { level: 'technique', penalty: 10, text: 'Morse code. Each group is one letter.' },
-        { level: 'strong', penalty: 20, text: `It is a place. It begins with ${cipherWord[0]}.` },
-        { level: 'reveal', penalty: 40, text: `The word is ${cipherWord}.` },
-      ],
-      explanation: 'Ask what a document is before you ask what it says.',
-      rewards: { evidence: ['ev-notebook'], log: 'Location recovered' },
-      nextPuzzles: ['gen-acrostic'],
-    },
-    {
-      id: 'gen-acrostic',
-      type: 'language.acrostic',
-      stage: 3,
-      difficulty,
-      title: 'What the porter did not say',
-      description:
-        'The statement is numbered, short, and says almost nothing. ' +
-        'It was not written for its content.',
-      data: {
-        documentId: 'doc-statement',
-        extraction: 'first-letter-per-line',
-        lines: acrosticWord.length,
-      },
-      solution: acrosticWord,
-      acceptedAnswers: acceptedFor(keyPerson),
-      dependencies: ['gen-cipher'],
-      unlockConditions: [{ type: 'puzzleSolved', id: 'gen-cipher' }],
-      researchRequired: false,
-      hints: [
-        { level: 'direction', penalty: 5, text: 'Read down the left edge, not across.' },
-        { level: 'technique', penalty: 10, text: 'An acrostic: the first letter of each line.' },
-        { level: 'strong', penalty: 20, text: `It is a name. It begins with ${acrosticWord[0]}.` },
-        { level: 'reveal', penalty: 40, text: `The name is ${keyPerson.name}.` },
-      ],
-      explanation: 'Suspect the format before the content.',
-      rewards: { log: 'Name recovered' },
-      nextPuzzles: ['gen-research'],
-    },
-    {
-      id: 'gen-research',
-      type: 'research.chain',
-      stage: 4,
-      difficulty,
-      title: 'Four people, no names',
-      description:
-        'The notebook describes four people by what they did. Name each one, ' +
-        'then read the initials in order.',
-      data: {
-        documentId: 'doc-notebook',
-        combine: 'initials-in-order',
-        steps: researchSubjects.map((person, i) => ({
-          id: `r${i + 1}`,
-          prompt: person.label,
-          solution: person.name.toUpperCase(),
-          acceptedAnswers: acceptedFor(person),
-          initial: person.name.charAt(0).toUpperCase(),
-        })),
-      },
-      solution: researchSubjects.map((p) => p.name.charAt(0).toUpperCase()).join(''),
-      acceptedAnswers: [
-        researchSubjects.map((p) => p.name.charAt(0).toUpperCase()).join(''),
-      ],
-      dependencies: ['gen-acrostic'],
-      unlockConditions: [{ type: 'puzzleSolved', id: 'gen-acrostic' }],
-      researchRequired: true,
-      hints: [
-        { level: 'direction', penalty: 5, text: 'All four are well documented. Look them up.' },
-        { level: 'technique', penalty: 10, text: 'Answer all four, then read the first letters downward.' },
-        {
-          level: 'strong',
-          penalty: 20,
-          text: researchSubjects.map((p) => p.name.charAt(0).toUpperCase()).join(', '),
-        },
-        {
-          level: 'reveal',
-          penalty: 40,
-          text: `The letters are ${researchSubjects.map((p) => p.name.charAt(0).toUpperCase()).join('')}.`,
-        },
-      ],
-      explanation: 'Looking things up is part of the work, not cheating.',
-      rewards: { log: 'Final sequence recovered' },
-      nextPuzzles: [],
-    },
-  ];
-
-  const title = rng.pick(CASE_TITLES);
-  const subject = rng.pick(SUBJECTS);
-  const caseNo = String(parts.caseNumber).padStart(3, '0');
-
-  return {
-    caseFile: {
-      id: `case-${caseNo}`,
-      number: parts.caseNumber,
-      procedural: true,
-      difficulty,
-      estimatedMinutes: Math.round(PAR_SECONDS[difficulty] / 60),
-      title: { key: `case${caseNo}.title`, fallback: title },
-      strapline: { key: `case${caseNo}.strapline`, fallback: `Case ${caseNo}` },
-      briefing: {
-        key: `case${caseNo}.briefing`,
-        fallback:
-          `In ${setting.name}, ${year}. Somebody entered ${subject} and left again ` +
-          'without taking anything.\n\nWhat they left behind is in front of you.',
-      },
-      objectives: [
-        { id: 'obj-evidence', label: 'Examine every item of evidence' },
-        { id: 'obj-solve', label: `Work through ${stages} stages` },
-        { id: 'obj-final', label: 'Submit the final answer' },
-      ],
-      scoring: {
-        base: 100,
-        hintPenalties: { direction: 5, technique: 10, strong: 20, reveal: 40 },
-        wrongAnswerPenalty: 3,
-        wrongAnswerFloor: 15,
-        parTimeSeconds: PAR_SECONDS[difficulty],
-        timeBonusMax: 5,
-        redHerringBonus: 5,
-        contradictionBonus: 5,
-        connectionBonus: 5,
-      },
-    },
-    evidence,
-    documents,
-    puzzles,
-    graph: {
-      entry: 'gen-inspect',
-      nodes: puzzles.map((p) => ({ id: p.id, stage: p.stage, next: p.nextPuzzles })),
-      linear: true,
-    },
-    meta: {
-      authored: false,
-      generatorVersion: GENERATOR_VERSION,
-      seed: `${parts.investigatorId}|${caseNo}|${difficulty}`,
-    },
+  const ledger: InvestigationDocument = {
+    id: 'doc-ledger',
+    style: 'ruled',
+    header: 'DOOR LEDGER',
+    body:
+      `${trueDay} ${month} ${trueYear}, 6.00 P.M. — Checked. Secure.\n` +
+      `${trueDay + 1} ${month} ${trueYear}, 6.10 A.M. — Found open. Reported.`,
+    footnote: 'Kept on the premises. Entries in one hand.',
+    marks: ['ruled', 'ink'],
+    hiddenClue: null,
   };
-}
+
+  /*
