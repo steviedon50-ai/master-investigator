@@ -1,88 +1,175 @@
 /**
- * Temporary harness: does the generator actually produce valid cases?
- * Generates a spread of cases for one investigator and reports the results.
+ * The game.
+ *
+ * Case 000 is authored and identical for everyone. From 001 the case is
+ * generated from this player's own seed, so the same case number is a
+ * different investigation for every investigator.
  */
 
-import { generateCase, GENERATOR_VERSION } from './engine/generator';
-import { validateCase } from './engine/validator';
-import { difficultyFor } from './engine/cases';
+import { useMemo, useState } from 'react';
+import { caseFor } from './engine/cases';
+import { useCase } from './state/useCase';
+import {
+  completeCase,
+  loadJourney,
+  openCase,
+  resetJourney,
+  type Journey,
+} from './state/journey';
+import CaseView from './ui/Case';
+import CaseFileView from './ui/CaseFile';
+import PuzzleView from './ui/Puzzle';
+import Results from './ui/Results';
+import RevealView from './ui/Reveal';
+import Solved from './ui/Solved';
+import Title from './ui/Title';
+import type { Puzzle } from './engine/types';
 
-interface Row {
-  caseNumber: number;
-  ok: boolean;
-  title: string;
-  errors: string[];
+type Screen = 'title' | 'casefile' | 'playing' | 'reveal' | 'results';
+
+function textOf(value: { fallback: string } | string): string {
+  return typeof value === 'string' ? value : value.fallback;
 }
 
 export default function App() {
-  const investigatorId = 'MI-TEST-01';
-  const rows: Row[] = [];
+  const [journey, setJourney] = useState<Journey>(loadJourney);
 
-  for (let caseNumber = 1; caseNumber <= 12; caseNumber += 1) {
-    const candidate = generateCase({
-      investigatorId,
-      caseNumber,
-      difficulty: difficultyFor(caseNumber),
-      generatorVersion: GENERATOR_VERSION,
-    });
+  // The case is generated once per case number, not on every render —
+  // generation walks the knowledge base and is not free.
+  const investigation = useMemo(
+    () => caseFor(journey.investigatorId, journey.current).investigation,
+    [journey.investigatorId, journey.current],
+  );
 
-    if (!candidate) {
-      rows.push({
-        caseNumber,
-        ok: false,
-        title: '—',
-        errors: ['generator returned null'],
-      });
-      continue;
-    }
+  const game = useCase(investigation);
 
-    const report = validateCase(candidate);
-    const title =
-      typeof candidate.caseFile.title === 'string'
-        ? candidate.caseFile.title
-        : candidate.caseFile.title.fallback;
+  const isTutorial = journey.current === 0;
 
-    rows.push({
-      caseNumber,
-      ok: report.valid,
-      title,
-      errors: report.issues
-        .filter((i) => i.severity === 'error')
-        .map((i) => `${i.code}: ${i.message}`),
-    });
+  const returning =
+    game.progress.inspectedEvidence.length > 0 ||
+    Object.keys(game.progress.puzzles).length > 0;
+
+  const [screen, setScreen] = useState<Screen>(
+    game.complete ? 'results' : returning ? 'playing' : 'title',
+  );
+  const [justSolved, setJustSolved] = useState<Puzzle | null>(null);
+
+  const finish = (): void => {
+    setJourney((current) => completeCase(current, current.current));
+  };
+
+  const nextCase = (): void => {
+    setJourney((current) => openCase(current, current.current + 1));
+    setScreen('title');
+    setJustSolved(null);
+  };
+
+  if (screen === 'title') {
+    return (
+      <Title
+        onBegin={() => setScreen('casefile')}
+        estimatedMinutes={investigation.caseFile.estimatedMinutes}
+        stageCount={investigation.puzzles.length}
+        caseNumber={journey.current}
+        caseTitle={isTutorial ? null : textOf(investigation.caseFile.title)}
+      />
+    );
   }
 
-  const passed = rows.filter((r) => r.ok).length;
+  if (screen === 'casefile') {
+    return (
+      <CaseFileView
+        caseFile={investigation.caseFile}
+        stageCount={investigation.puzzles.length}
+        evidenceCount={investigation.evidence.length}
+        onOpen={() => setScreen('playing')}
+      />
+    );
+  }
+
+  if (screen === 'reveal' && investigation.reveal) {
+    return (
+      <RevealView
+        reveal={investigation.reveal}
+        onContinue={() => setScreen('results')}
+      />
+    );
+  }
+
+  if (screen === 'results') {
+    return (
+      <Results
+        score={game.score}
+        caseTitle={textOf(investigation.caseFile.title)}
+        onRestart={game.restart}
+        onNext={nextCase}
+      />
+    );
+  }
+
+  const puzzle = game.active;
 
   return (
-    <main className="boot">
-      <p className="boot__number">Generator test</p>
-      <h1 className="boot__title">
-        {passed} of {rows.length} valid
-      </h1>
+    <CaseView
+      investigation={investigation}
+      progress={game.progress}
+      evidence={game.evidence}
+      percent={game.percent}
+      score={game.score.total}
+      onInspect={game.inspect}
+      onAddNote={game.addNote}
+      onDeleteNote={game.deleteNote}
+      onRestart={game.restart}
+    >
+      {justSolved ? (
+        <Solved
+          puzzle={justSolved}
+          fragment={justSolved.rewards.fragment}
+          hintsUsed={game.hintsUsedFor(justSolved.id).length}
+          onContinue={() => setJustSolved(null)}
+        />
+      ) : puzzle ? (
+        <PuzzleView
+          puzzle={puzzle}
+          stageCount={investigation.puzzles.length}
+          document={game.documentFor(puzzle.data.documentId as string | undefined)}
+          evidence={game.evidence}
+          fragments={game.progress.fragments}
+          hintsUsed={game.hintsUsedFor(puzzle.id)}
+          stepAnswers={game.progress.puzzles[puzzle.id]?.stepAnswers ?? {}}
+          outcome={game.lastOutcome}
+          onSubmit={(answer) => {
+            const result = game.submitAnswer(puzzle, answer);
+            if (!result.correct) return;
 
-      <ul style={{ listStyle: 'none', padding: 0, margin: '2rem 0 0' }}>
-        {rows.map((row) => (
-          <li key={row.caseNumber} style={{ marginBottom: '1.25rem' }}>
-            <p style={{ margin: 0, color: row.ok ? '#5dcaa5' : '#e2726a' }}>
-              Case {String(row.caseNumber).padStart(3, '0')} — {row.ok ? 'valid' : 'failed'} —{' '}
-              {row.title}
-            </p>
-            {row.errors.map((error, i) => (
-              <p
-                key={i}
-                style={{
-                  margin: '0.25rem 0 0 1rem',
-                  fontSize: '0.8rem',
-                  color: '#8e948f',
-                }}
-              >
-                {error}
-              </p>
-            ))}
-          </li>
-        ))}
-      </ul>
-    </main>
+            const last = puzzle.nextPuzzles.length === 0;
+
+            if (puzzle.type === 'meta.assembly') {
+              finish();
+              setScreen('reveal');
+            } else if (last) {
+              finish();
+              setJustSolved(puzzle);
+            } else {
+              setJustSolved(puzzle);
+            }
+          }}
+          onAnswerStep={(stepId, answer) => game.answerStep(puzzle.id, stepId, answer)}
+          onUseHint={(level) => game.useHint(puzzle, level)}
+          onClearOutcome={game.clearOutcome}
+        />
+      ) : (
+        <section className="pz">
+          <h2 className="pz__title">Case closed</h2>
+          <button
+            type="button"
+            className="pz__submit"
+            onClick={() => setScreen('results')}
+          >
+            See your results
+          </button>
+        </section>
+      )}
+    </CaseView>
   );
 }
