@@ -4,6 +4,8 @@ import App from './App';
 import './styles/base.css';
 import './styles/boot.css';
 import './styles/document.css';
+import './styles/puzzle.css';
+
 
 
 const rootEl = document.getElementById('root');
