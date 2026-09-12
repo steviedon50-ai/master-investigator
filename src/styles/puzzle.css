@@ -1,0 +1,212 @@
+/* Puzzle screen. One task, full width, thumb-reachable controls. */
+
+.pz {
+  padding: 0 var(--gutter) 3rem;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.pz__stage {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  color: var(--brass);
+  margin: 0 0 0.6rem;
+}
+
+.pz__title {
+  font-size: var(--step-2);
+  color: var(--paper);
+  margin: 0 0 0.5rem;
+}
+
+.pz__description {
+  color: var(--text-dim);
+  margin: 0 0 1.25rem;
+  line-height: 1.6;
+}
+
+/* --- Inputs ------------------------------------------------------ */
+
+.pz__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.pz__input {
+  width: 100%;
+  /* 16px minimum, or iOS zooms the whole page on focus. */
+  font-size: 16px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  background: var(--charcoal-raised);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.85rem 0.75rem;
+  min-height: 48px;
+}
+
+.pz__input:focus {
+  border-color: var(--brass);
+  outline: none;
+}
+
+.pz__input::placeholder {
+  color: #5f6560;
+}
+
+.pz__answer {
+  margin: 0 0 1rem;
+}
+
+.pz__error {
+  color: #e2726a;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.pz__submit {
+  width: 100%;
+  background: var(--brass);
+  color: #14100a;
+  border: 0;
+  border-radius: 4px;
+  padding: 0.95rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  min-height: 52px;
+}
+
+.pz__submit:active {
+  transform: scale(0.99);
+}
+
+.pz__feedback {
+  margin: 0.85rem 0 0;
+  padding: 0.75rem 0.85rem;
+  background: rgba(226, 160, 74, 0.09);
+  border-left: 2px solid var(--amber);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+/* --- Research chain ---------------------------------------------- */
+
+.pz__steps {
+  margin: 0 0 1.5rem;
+}
+
+.pz__step {
+  margin-bottom: 1.1rem;
+}
+
+.pz__step-prompt {
+  display: block;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.pz__step-number {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--brass);
+  margin-right: 0.5rem;
+}
+
+.pz__step-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pz__step-mark {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: #5f6560;
+  width: 1.2rem;
+  text-align: center;
+  flex: none;
+}
+
+.pz__step-mark--done {
+  color: var(--verdigris);
+}
+
+/* --- Hints -------------------------------------------------------- */
+
+.pz__hints {
+  margin-top: 1.75rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 1rem;
+}
+
+.pz__hints-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 0.65rem 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  min-height: 48px;
+}
+
+.pz__hints-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.pz__hint-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.pz__hint {
+  margin-bottom: 0.5rem;
+}
+
+.pz__hint-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: var(--charcoal-raised);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.8rem 0.85rem;
+  color: var(--text);
+  font-size: 0.9rem;
+  text-align: left;
+  min-height: 48px;
+}
+
+/* The cost is stated before it is paid, never after. */
+.pz__hint-cost {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--amber);
+  flex: none;
+}
+
+.pz__hint-text {
+  margin: 0;
+  padding: 0.8rem 0.85rem;
+  background: rgba(176, 141, 79, 0.08);
+  border-left: 2px solid var(--brass);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text);
+}
