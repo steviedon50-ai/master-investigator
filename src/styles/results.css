@@ -1,0 +1,160 @@
+/* Results. The rank is the headline; the dimensions explain it. */
+
+.res {
+  min-height: 100dvh;
+  padding: 2.5rem var(--gutter);
+  padding-top: calc(2.5rem + var(--safe-top));
+  padding-bottom: calc(2.5rem + var(--safe-bottom));
+  background:
+    radial-gradient(90% 55% at 50% 0%, rgba(201, 139, 58, 0.1) 0%, rgba(201, 139, 58, 0) 60%),
+    var(--charcoal);
+}
+
+.res__inner {
+  width: 100%;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.res__label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: var(--verdigris);
+  margin: 0 0 0.5rem;
+}
+
+.res__case {
+  font-size: var(--step-1);
+  color: var(--text-dim);
+  font-weight: 400;
+  margin: 0 0 2rem;
+}
+
+/* The rank is what a player remembers, so it gets the display face. */
+.res__rank {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  line-height: 1.1;
+  color: var(--paper);
+  margin: 0 0 0.5rem;
+}
+
+.res__total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0 0 2.5rem;
+}
+
+.res__total-value {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  color: var(--brass);
+}
+
+.res__total-max {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* --- Dimensions ---------------------------------------------------- */
+
+.res__dimensions {
+  list-style: none;
+  margin: 0 0 2rem;
+  padding: 0;
+}
+
+.res__dimension {
+  margin-bottom: 1.25rem;
+}
+
+.res__dimension-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+
+.res__dimension-label {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.res__dimension-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--paper);
+}
+
+.res__bar {
+  height: 3px;
+  background: #1a201e;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.res__bar-fill {
+  height: 3px;
+  background: var(--brass);
+  border-radius: 2px;
+}
+
+/* The note says what the number measures, so a low score is actionable. */
+.res__dimension-note {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin: 0.35rem 0 0;
+}
+
+/* --- Facts ---------------------------------------------------------- */
+
+.res__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  margin: 0 0 2rem;
+  padding: 1.1rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.res__facts dt {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+
+.res__facts dd {
+  margin: 0;
+  color: var(--paper);
+  font-size: 0.95rem;
+  font-family: var(--font-mono);
+}
+
+.res__next {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  border-left: 2px solid var(--rule);
+  padding-left: 1rem;
+  margin: 0 0 2rem;
+}
+
+.res__again {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 1px solid var(--brass);
+  border-radius: 4px;
+  color: var(--paper);
+  padding: 0.95rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.1em;
+  min-height: 54px;
+}
