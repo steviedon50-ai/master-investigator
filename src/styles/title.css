@@ -1,6 +1,204 @@
-/* Title screen and case file. The two screens before the investigation. */
+/* Title screen: a case file on a desk under a lamp.
+   Everything drawn in CSS. The desk is quiet; the file is the subject. */
 
-.title,
+.desk {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2.5rem var(--gutter);
+  padding-top: calc(2.5rem + var(--safe-top));
+  padding-bottom: calc(2.5rem + var(--safe-bottom));
+  overflow: hidden;
+
+  /* Lamp from the upper left, falling across a dark desk. Two layers:
+     a tight warm pool, then a wide dim wash so the corners are not black. */
+  background:
+    radial-gradient(
+      70% 50% at 22% 8%,
+      rgba(201, 139, 58, 0.2) 0%,
+      rgba(201, 139, 58, 0.05) 40%,
+      rgba(201, 139, 58, 0) 70%
+    ),
+    radial-gradient(
+      120% 90% at 50% 45%,
+      rgba(255, 244, 224, 0.045) 0%,
+      rgba(255, 244, 224, 0) 65%
+    ),
+    #0a0d0c;
+}
+
+/* Wood grain, so faint it reads as texture rather than pattern. */
+.desk::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    96deg,
+    rgba(255, 255, 255, 0.012) 0px,
+    rgba(255, 255, 255, 0.012) 1px,
+    rgba(0, 0, 0, 0) 1px,
+    rgba(0, 0, 0, 0) 9px
+  );
+}
+
+/* --- Papers under the file ----------------------------------------- */
+
+.desk__under {
+  position: absolute;
+  background: #d8d0bd;
+  border-radius: 1px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+.desk__under--a {
+  width: min(78vw, 24rem);
+  height: 60vh;
+  transform: rotate(-3.5deg);
+  opacity: 0.5;
+}
+
+.desk__under--b {
+  width: min(74vw, 23rem);
+  height: 58vh;
+  transform: rotate(2.5deg);
+  opacity: 0.32;
+}
+
+/* --- The folder ----------------------------------------------------- */
+
+.folder {
+  position: relative;
+  width: min(86vw, 26rem);
+  transform: rotate(-1deg);
+}
+
+.folder__tab {
+  position: relative;
+  z-index: 1;
+  width: 5.5rem;
+  margin-left: 1.5rem;
+  background: #c2a878;
+  border-radius: 4px 4px 0 0;
+  padding: 0.4rem 0 0.3rem;
+  text-align: center;
+  box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.35);
+}
+
+.folder__tab-text {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  color: #3a2f18;
+}
+
+.folder__body {
+  position: relative;
+  background: linear-gradient(160deg, #cdb488 0%, #c0a679 55%, #b69c6f 100%);
+  border-radius: 0 4px 3px 3px;
+  padding: 1.6rem 1.4rem 1.5rem;
+  /* Sitting on a desk, not floating: a tight contact shadow plus a soft one. */
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    0 14px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* The crease where a folder is scored to fold. */
+.folder__body::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0.55rem;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.13);
+}
+
+.folder__ref {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  color: #5b4a28;
+  margin: 0 0 1.25rem;
+}
+
+/* The withheld name. Stamped rather than typed — rotated, ink-heavy,
+   sitting slightly proud of the card. */
+.folder__stamp {
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  line-height: 1;
+  color: rgba(60, 40, 22, 0.55);
+  margin: 0 0 0.5rem;
+  transform: rotate(-6deg);
+  transform-origin: left center;
+  text-shadow: 0 1px 0 rgba(255, 250, 235, 0.22);
+}
+
+.folder__title {
+  font-size: clamp(1.7rem, 8vw, 2.3rem);
+  line-height: 1.1;
+  color: #241c0e;
+  margin: 0 0 1rem;
+}
+
+.folder__rule {
+  height: 1px;
+  background: rgba(70, 55, 30, 0.28);
+  margin: 0 0 1.1rem;
+}
+
+.folder__lede {
+  color: #3a2f1a;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  margin: 0 0 0.9rem;
+}
+
+.folder__task {
+  color: #4a3c22;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  border-left: 2px solid rgba(70, 55, 30, 0.4);
+  padding-left: 0.85rem;
+  margin: 0 0 1.25rem;
+}
+
+.folder__meta {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: #6a5936;
+  margin: 0;
+}
+
+/* --- Begin ---------------------------------------------------------- */
+
+.desk__begin {
+  position: relative;
+  margin-top: 2rem;
+  width: min(86vw, 26rem);
+  background: var(--brass);
+  color: #14100a;
+  border: 0;
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  min-height: 54px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.desk__begin:active {
+  transform: translateY(1px);
+}
+
+/* --- Case file screen ----------------------------------------------- */
+
 .cf {
   min-height: 100dvh;
   display: flex;
@@ -11,77 +209,11 @@
   padding-bottom: calc(2rem + var(--safe-bottom));
 }
 
-.title__inner,
 .cf__inner {
   width: 100%;
   max-width: 32rem;
   margin: 0 auto;
 }
-
-/* --- Title -------------------------------------------------------- */
-
-.title__number {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
-  color: var(--brass);
-  margin: 0 0 2rem;
-}
-
-/* The withheld name, standing in for the title that has not been earned. */
-.title__mark {
-  font-family: var(--font-display);
-  font-size: clamp(3.5rem, 18vw, 5.5rem);
-  line-height: 1;
-  color: var(--paper);
-  margin: 0 0 0.75rem;
-  opacity: 0.85;
-}
-
-.title__name {
-  font-size: var(--step-3);
-  color: var(--paper);
-  margin: 0 0 1.5rem;
-}
-
-.title__lede {
-  color: var(--text);
-  font-size: 1.02rem;
-  line-height: 1.6;
-  margin: 0 0 1rem;
-}
-
-.title__task {
-  color: var(--text-dim);
-  line-height: 1.6;
-  border-left: 2px solid var(--brass);
-  padding-left: 1rem;
-  margin: 0 0 2.25rem;
-}
-
-.title__begin {
-  display: block;
-  width: 100%;
-  background: var(--brass);
-  color: #14100a;
-  border: 0;
-  border-radius: 4px;
-  padding: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.12em;
-  min-height: 54px;
-}
-
-.title__meta {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: #5f6560;
-  text-align: center;
-  margin: 1rem 0 0;
-}
-
-/* --- Case file ----------------------------------------------------- */
 
 .cf__number {
   font-family: var(--font-mono);
