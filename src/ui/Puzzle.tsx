@@ -2,13 +2,15 @@
  * Puzzle screen.
  *
  * One puzzle fills the screen. Whatever the puzzle depends on — a document,
- * or a bare piece of ciphertext — is shown directly above the input.
- * Puzzles that need a choice rather than a typed answer get their own control.
+ * a piece of ciphertext, or the words recovered so far — is shown directly
+ * above the input. Puzzles needing a choice rather than a typed answer get
+ * their own control.
  */
 
 import { useEffect, useState } from 'react';
 import type {
   Evidence,
+  Fragment,
   HintLevel,
   InvestigationDocument,
   Puzzle,
@@ -35,6 +37,7 @@ interface Props {
   stageCount: number;
   document: InvestigationDocument | null;
   evidence: Evidence[];
+  fragments: Fragment[];
   hintsUsed: HintLevel[];
   stepAnswers: Record<string, string>;
   outcome: { correct: boolean; approximate: boolean; feedback?: string } | null;
@@ -51,11 +54,24 @@ const HINT_LABELS: Record<HintLevel, string> = {
   reveal: 'Reveal the answer',
 };
 
+/**
+ * Fixed shuffle: the same four words in the same wrong order for every player,
+ * every time. A shuffle that changed on each visit would make the puzzle feel
+ * arbitrary rather than set.
+ */
+function shuffled(fragments: Fragment[]): Fragment[] {
+  return [...fragments].sort((a, b) => {
+    const key = (f: Fragment): number => (f.slot * 7919) % 11;
+    return key(a) - key(b);
+  });
+}
+
 export default function PuzzleView({
   puzzle,
   stageCount,
   document,
   evidence,
+  fragments,
   hintsUsed,
   stepAnswers,
   outcome,
@@ -80,14 +96,11 @@ export default function PuzzleView({
   const isResearch = puzzle.type === 'research.chain';
   const isInspection = puzzle.type === 'inspection';
   const isContradiction = puzzle.type === 'deduction.contradiction';
+  const isMeta = puzzle.type === 'meta.assembly';
 
   const ciphertext =
     typeof puzzle.data.ciphertext === 'string' ? puzzle.data.ciphertext : null;
 
-  /**
-   * Copy rather than a search link: opening a search replaces the page in an
-   * installed web app, which throws the player out of the game.
-   */
   const copyPrompt = async (step: ResearchStep): Promise<void> => {
     try {
       await navigator.clipboard.writeText(step.prompt);
@@ -96,6 +109,12 @@ export default function PuzzleView({
     } catch {
       // Clipboard blocked. Nothing useful to offer, so say nothing.
     }
+  };
+
+  const addWord = (word: string): void => {
+    setAnswer((current) => (current ? `${current} ${word}` : word));
+    if (error) setError('');
+    if (outcome) onClearOutcome();
   };
 
   const handleSubmit = (): void => {
@@ -121,6 +140,32 @@ export default function PuzzleView({
       {document && <DocumentView document={document} inline />}
 
       {!document && ciphertext && <p className="pz__cipher">{ciphertext}</p>}
+
+      {isMeta && fragments.length > 0 && (
+        <div className="pz__fragments">
+          <p className="pz__label">Words you have recovered</p>
+          <ul className="pz__fragment-list">
+            {shuffled(fragments).map((fragment) => (
+              <li key={fragment.slot}>
+                <button
+                  type="button"
+                  className="pz__fragment"
+                  onClick={() => addWord(fragment.word)}
+                >
+                  {fragment.word}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="pz__clear"
+            onClick={() => setAnswer('')}
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {isContradiction && (
         <Contradiction
@@ -189,7 +234,7 @@ export default function PuzzleView({
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
-            placeholder="Enter the word"
+            placeholder={isMeta ? 'Tap the words, or type it' : 'Enter the word'}
             onChange={(e) => {
               setAnswer(e.target.value);
               if (error) setError('');
